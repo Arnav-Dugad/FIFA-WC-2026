@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 Hub — Live Scores, Fixtures, Teams &amp; Stats</title>
+<meta name="description" content="Your free home for FIFA World Cup 2026: all 48 teams, 104 fixtures, live match stats, players, stadiums and news — every kick-off in your local time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://flagcdn.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="index.html">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="pill pill-green">● The 23rd FIFA World Cup · 48 Teams</span>
+      <h1 class="display">The World<br><span class="g">Unites in 2026</span></h1>
+      <p class="lead">USA, Canada &amp; Mexico host the biggest tournament ever staged — 48 nations, 16 cities, 104 matches. Follow every fixture, live stat and story, all in <b style="color:#fff">your local time</b>.</p>
+      <div class="hero-cta">
+        <a href="live.html" class="btn btn-primary">▶ Watch Live Now</a>
+        <a href="fixtures.html" class="btn btn-ghost">View Full Schedule</a>
+      </div>
+      <div class="hero-stats">
+        <div class="s"><b>48</b><span>Teams</span></div>
+        <div class="s"><b>104</b><span>Matches</span></div>
+        <div class="s"><b>16</b><span>Host Cities</span></div>
+        <div class="s"><b>3</b><span>Nations</span></div>
+      </div>
+    </div>
+    <div class="hero-card reveal">
+      <div class="trophy">🏆</div>
+      <h3 class="display">Countdown to Kick-Off</h3>
+      <p class="sub">Opening Match · Mexico vs Croatia · Estadio Azteca</p>
+      <div class="countdown" id="countdown"></div>
+      <a href="fixtures.html" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:20px">See Opening Fixtures →</a>
+    </div>
+  </div>
+</section>
+
+<!-- SPOTLIGHT: always-on LIVE + NEXT -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div><div class="eyebrow">Right now</div><h2 class="display">Live &amp; <span class="display">Up Next</span></h2></div>
+      <a href="live.html" class="link-more">Live center →</a>
+    </div>
+    <div class="grid reveal" id="spotlight" style="grid-template-columns:1fr 1fr;gap:18px"></div>
+  </div>
+</section>
+
+<!-- TODAY'S MATCHES WIDGET -->
+<section class="section-tight" id="todaySec" style="display:none">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div><div class="eyebrow" id="todayDate">Today</div><h2 class="display">Today's <span class="display">Matches</span></h2></div>
+      <a href="fixtures.html" class="link-more">Full schedule →</a>
+    </div>
+    <div class="grid reveal" id="todayGrid" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))"></div>
+  </div>
+</section>
+
+<!-- FEATURED / UPCOMING -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div><div class="eyebrow">Don't miss</div><h2 class="display">Featured <span class="display">Fixtures</span></h2></div>
+      <a href="fixtures.html" class="link-more">All fixtures →</a>
+    </div>
+    <div class="grid reveal" id="featuredMatches" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))"></div>
+  </div>
+</section>
+
+<!-- TICKER / STAR TEAMS -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div><div class="eyebrow">The favourites</div><h2 class="display">Top <span class="display">Contenders</span></h2></div>
+      <a href="teams.html" class="link-more">All 48 teams →</a>
+    </div>
+    <div class="scroll-x reveal" id="topTeams"></div>
+  </div>
+</section>
+
+<!-- FORMAT EXPLAINER -->
+<section class="section" id="format">
+  <div class="wrap">
+    <div class="section-head reveal"><div><div class="eyebrow">How it works</div><h2 class="display">A New <span class="display">Era</span> of the World Cup</h2></div></div>
+    <div class="grid reveal" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
+      <div class="card" style="padding:24px"><div style="font-size:2rem">🌍</div><h3 class="display" style="margin:10px 0 6px">48 Teams, 12 Groups</h3><p class="muted" style="font-size:.92rem">The field expands from 32 to 48 nations split into 12 groups of four. The top two from each group plus the eight best third-placed teams advance.</p></div>
+      <div class="card" style="padding:24px"><div style="font-size:2rem">🆕</div><h3 class="display" style="margin:10px 0 6px">New Round of 32</h3><p class="muted" style="font-size:.92rem">For the first time a 32-team knockout round follows the groups — more do-or-die drama on the road to the final than ever before.</p></div>
+      <div class="card" style="padding:24px"><div style="font-size:2rem">🏟️</div><h3 class="display" style="margin:10px 0 6px">16 Iconic Cities</h3><p class="muted" style="font-size:.92rem">From the historic Estadio Azteca to LA's futuristic SoFi Stadium, three nations open their greatest venues across four time zones.</p></div>
+      <div class="card" style="padding:24px"><div style="font-size:2rem">⚽</div><h3 class="display" style="margin:10px 0 6px">104 Matches, 39 Days</h3><p class="muted" style="font-size:.92rem">The most matches in World Cup history, climaxing on July 19, 2026 at MetLife Stadium in New York/New Jersey.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- LATEST NEWS -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div><div class="eyebrow">From the press box</div><h2 class="display">Latest <span class="display">News</span></h2></div>
+      <a href="news.html" class="link-more">All news →</a>
+    </div>
+    <div class="grid news-grid reveal" id="homeNews"></div>
+  </div>
+</section>
+
+<!-- QUICK LINKS -->
+<section class="section-tight">
+  <div class="wrap grid reveal" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <a href="stadiums.html" class="card" style="padding:24px"><div style="font-size:1.6rem">🏟️</div><h3 class="display" style="margin-top:8px">Stadiums &amp; Maps</h3><p class="muted" style="font-size:.88rem">Explore all 16 venues with interactive maps.</p></a>
+    <a href="players.html" class="card" style="padding:24px"><div style="font-size:1.6rem">⭐</div><h3 class="display" style="margin-top:8px">Star Players</h3><p class="muted" style="font-size:.88rem">The icons and wonderkids to watch this summer.</p></a>
+    <a href="stats.html" class="card" style="padding:24px"><div style="font-size:1.6rem">📊</div><h3 class="display" style="margin-top:8px">Stats &amp; Standings</h3><p class="muted" style="font-size:.88rem">Live group tables, top scorers and leaderboards.</p></a>
+    <a href="live.html" class="card" style="padding:24px"><div style="font-size:1.6rem">🔴</div><h3 class="display" style="margin-top:8px">Live Center</h3><p class="muted" style="font-size:.88rem">Real-time scores, momentum and commentary.</p></a>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/live-data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  startCountdown(TOURNAMENT.start, '#countdown');
+
+  function isSameLocalDay(iso, ref){ const d=new Date(iso); return d.getFullYear()===ref.getFullYear()&&d.getMonth()===ref.getMonth()&&d.getDate()===ref.getDate(); }
+
+  function renderHome(){
+    resolveKnockout();
+    const withTeams = MATCHES.filter(m=>m.home&&m.away);
+    const live = withTeams.filter(m=>m.status==='live').sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    const upcoming = withTeams.filter(m=>m.status==='upcoming').sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    const finished = withTeams.filter(m=>m.status==='finished').sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+
+    /* SPOTLIGHT — always show a live match (or latest result) + the next match */
+    const sp=$('#spotlight'); sp.innerHTML='';
+    const liveOrLast = live[0] || finished[0];
+    const nextUp = upcoming[0];
+    const cards=[];
+    if(liveOrLast){ const w=el('div'); w.innerHTML=`<div style="font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:${live[0]?'var(--red)':'var(--muted)'};margin-bottom:8px">${live[0]?'🔴 Live now':'⏱️ Latest result'}</div>`; w.appendChild(matchCard(liveOrLast)); cards.push(w); }
+    if(nextUp){ const w=el('div'); w.innerHTML=`<div style="font-size:.72rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:8px">▶ Up next · ${relativeKO(nextUp.kickoff)}</div>`; w.appendChild(matchCard(nextUp)); cards.push(w); }
+    if(!cards.length){ sp.innerHTML='<div class="empty" style="grid-column:1/-1">The schedule is complete — what a tournament!</div>'; }
+    else cards.forEach(c=>sp.appendChild(c));
+    sp.style.gridTemplateColumns = (cards.length>1 && window.innerWidth>760) ? '1fr 1fr' : '1fr';
+
+    /* TODAY widget */
+    const now=new Date();
+    const today = withTeams.filter(m=>isSameLocalDay(m.kickoff, now)).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    if(today.length){
+      $('#todaySec').style.display='';
+      $('#todayDate').textContent = now.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'});
+      const tg=$('#todayGrid'); tg.innerHTML=''; today.forEach(m=>tg.appendChild(matchCard(m)));
+    } else $('#todaySec').style.display='none';
+
+    /* FEATURED — biggest upcoming games (by combined team ranking) */
+    const feat=$('#featuredMatches'); feat.innerHTML='';
+    const big=[...upcoming].sort((a,b)=>(team(a.home).rank+team(a.away).rank)-(team(b.home).rank+team(b.away).rank)).slice(0,6);
+    (big.length?big:finished.slice(0,6)).forEach(m=>feat.appendChild(matchCard(m)));
+  }
+  LiveData.refresh(renderHome);
+  setInterval(()=>LiveData.refresh(renderHome), 30000);
+
+  // Top contenders carousel
+  const tt = $('#topTeams');
+  TEAMS.filter(t=>t.rank).sort((a,b)=>a.rank-b.rank).slice(0,10).forEach(t=>{
+    const c = el('a','card team-tile'); c.href='teams.html';
+    c.innerHTML = `<span class="rk">#${t.rank}</span><span class="grp">${t.group}</span>
+      <img class="flag" src="${flag(t.cc)}" alt="${t.name}" loading="lazy">
+      <h4>${t.name}</h4><div class="meta">${t.conf}</div>`;
+    tt.appendChild(c);
+  });
+
+  // News
+  const hn = $('#homeNews');
+  NEWS.slice(0,5).forEach((n,i)=>{
+    const c = el('div','card news-card'+(i===0?' news-feature':''));
+    const venue = stadium(n.img);
+    c.innerHTML = `<div class="news-img"><span class="cat">${n.cat}</span>
+        <img src="${cityImg(n.img, venue.city||n.img)}" alt=""></div>
+      <div class="news-body"><div class="date">${localDate(n.date,{month:'long',day:'numeric'})} · ${localTime(n.date)}</div>
+        <h3>${n.title}</h3><p class="blurb">${n.blurb}</p></div>`;
+    loadVenuePhoto(c.querySelector('.news-img img'), venue.wiki);
+    c.onclick = ()=> showModal(`<div class="modal-hero" style="background:var(--grad-hero)"><span style="font-size:2.4rem">📰</span></div>
+      <div class="modal-body"><span class="pill pill-gold">${n.cat}</span>
+      <h2 style="margin:12px 0 4px">${n.title}</h2><p class="sub">${localDateFull(n.date)} · ${localTime(n.date)} ${tzAbbr}</p>
+      <p style="color:var(--muted)">${n.blurb}</p><p style="color:var(--muted);margin-top:12px">Full coverage, team-by-team reaction and tactical analysis continues across our News desk as the tournament unfolds.</p>
+      <a href="news.html" class="btn btn-primary" style="margin-top:18px">More stories →</a></div>`);
+    hn.appendChild(c);
+  });
+</script>
+</body>
+</html>

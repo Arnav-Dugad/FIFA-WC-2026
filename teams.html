@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teams &amp; Groups — World Cup 2026</title>
+<meta name="description" content="All 48 World Cup 2026 nations, the 12 groups, live standings, flags and squad info.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="teams.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / Teams</div>
+    <h1 class="display reveal">48 Nations, <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">One Dream</span></h1>
+    <p class="reveal">Twelve groups of four. The top two from each group, plus the eight best third-placed sides, march into the new Round of 32. Tap any team for a profile.</p>
+  </div>
+</section>
+
+<!-- VIEW TOGGLE -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="filterbar reveal">
+      <input class="search-input" id="search" placeholder="🔍 Find a nation…">
+      <span style="flex:1"></span>
+      <button class="chip active" data-view="groups">Group View</button>
+      <button class="chip" data-view="all">All Teams</button>
+      <button class="chip" data-view="conf">By Confederation</button>
+    </div>
+
+    <!-- GROUPS -->
+    <div id="groupsView" class="grid groups-grid reveal"></div>
+
+    <!-- ALL TEAMS GRID -->
+    <div id="allView" class="grid teams-grid reveal" style="display:none"></div>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/live-data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  LiveData.applyStatus();
+  /* -------- group standings cards -------- */
+  const gv = $('#groupsView');
+  function renderGroups(){
+    gv.innerHTML='';
+    GROUPS.forEach(g=>{
+      const table = computeStandings(g);
+      const card = el('div','card group-card');
+      const rows = table.map((r,i)=>{
+        const t=team(r.code);
+        return `<tr class="${i<2?'qual':''}">
+          <td class="tname"><span class="tname"><img src="${flag(t.cc)}" alt=""> ${t.name}</span></td>
+          <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td>
+          <td>${r.GF}:${r.GA}</td><td class="pts">${r.Pts}</td></tr>`;
+      }).join('');
+      card.innerHTML = `
+        <div class="group-head"><span class="gl">${g}</span><h3 class="display">Group ${g}</h3></div>
+        <table class="standings">
+          <thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF:GA</th><th>Pts</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="padding:10px 16px;font-size:.72rem;color:var(--muted);border-top:1px solid var(--card-border)">
+          <span style="color:var(--green)">▌</span> Qualification places (top 2 advance)</div>`;
+      gv.appendChild(card);
+    });
+  }
+  renderGroups();
+  LiveData.refresh(renderGroups);
+
+  /* -------- all teams grid -------- */
+  function teamTile(t){
+    const c = el('div','card team-tile');
+    c.innerHTML = `<span class="rk">#${t.rank}</span><span class="grp">${t.group}</span>
+      <button class="fav-btn ${isFav(t.code)?'on':''}" title="Follow ${t.name}">${isFav(t.code)?'★':'☆'}</button>
+      <img class="flag" src="${flag(t.cc)}" alt="${t.name}" loading="lazy">
+      <h4>${t.name}</h4><div class="meta">${t.conf}${t.host?' · Host':''}</div>`;
+    c.querySelector('.fav-btn').onclick = (e)=>{ e.stopPropagation(); const on=toggleFav(t.code); const b=e.currentTarget; b.classList.toggle('on',on); b.textContent=on?'★':'☆'; };
+    c.onclick = ()=> teamModal(t);
+    return c;
+  }
+  function renderAll(filter){
+    const av=$('#allView'); av.innerHTML='';
+    let list=[...TEAMS];
+    if(filter) list=list.filter(t=>t.name.toLowerCase().includes(filter));
+    list.sort((a,b)=>a.rank-b.rank).forEach(t=>av.appendChild(teamTile(t)));
+  }
+
+  /* -------- team detail modal -------- */
+  function teamModal(t){
+    const squad = PLAYERS.filter(p=>p.team===t.code);
+    const fixtures = MATCHES.filter(m=>m.home===t.code||m.away===t.code).slice(0,3);
+    const rivals = TEAMS.filter(x=>x.group===t.group && x.code!==t.code).map(x=>`<img class="flag-sm" title="${x.name}" src="${flag(x.cc)}">`).join(' ');
+    showModal(`
+      <div class="modal-hero" style="background:linear-gradient(150deg,${t.c1},${t.c2})">
+        <img src="${flag(t.cc)}" alt="${t.name}"></div>
+      <div class="modal-body">
+        <span class="pill pill-green">Group ${t.group} · ${t.conf}</span>
+        <h2 style="margin:12px 0 2px">${t.name} ${t.host?'🏠':''}${t.debut?' <span class="pill pill-gold" style="font-size:.6rem;vertical-align:middle">DEBUT</span>':''}</h2>
+        <p class="sub">${t.nick||''} · FIFA Ranking #${t.rank}</p>
+        <div class="kv-grid">
+          <div class="kv"><span>World Rank</span><b>#${t.rank}</b></div>
+          <div class="kv"><span>WC Titles</span><b>${t.titles?('★ '+t.titles):'—'}</b></div>
+          <div class="kv"><span>Best finish</span><b style="font-size:.92rem">${t.best||'—'}</b></div>
+          <div class="kv"><span>Confederation</span><b>${t.conf}</b></div>
+          <div class="kv"><span>Group</span><b>Group ${t.group}</b></div>
+          <div class="kv"><span>Group rivals</span><b style="display:flex;gap:5px;margin-top:4px">${rivals}</b></div>
+        </div>
+        ${squad.length?`<h3 class="display" style="font-size:1rem;margin-bottom:8px">Players to watch</h3>
+          ${squad.map(p=>`<div class="lineup-row"><span class="ln">${p.num}</span>
+            <b>${p.name}</b><span class="pos-badge pos-${p.pos}" style="margin:0">${p.pos}</span>
+            <span class="muted" style="margin-left:auto;font-size:.8rem">${p.club}</span></div>`).join('')}`:''}
+        <h3 class="display" style="font-size:1rem;margin:16px 0 8px">Upcoming</h3>
+        ${fixtures.map(m=>{const o=team(m.home===t.code?m.away:m.home);
+          return `<div class="lineup-row"><img class="flag-sm" src="${flag(o.cc)}"><b>vs ${o.name}</b>
+          <span class="muted" style="margin-left:auto;font-size:.8rem">${localDate(m.kickoff)} · ${localTime(m.kickoff)}</span></div>`;}).join('')}
+        <button class="btn btn-gold" id="loadSquad" style="margin:18px 8px 0 0">🔎 Load full squad</button>
+        <a href="fixtures.html" class="btn btn-ghost" style="margin-top:18px">Full schedule →</a>
+        <div id="squadBox" style="margin-top:16px"></div>
+      </div>`);
+    const btn=$('#loadSquad');
+    if(btn) btn.onclick=async()=>{
+      const box=$('#squadBox'); btn.textContent='⏳ Loading…'; btn.disabled=true;
+      const sq=await fetchNationalSquad(t.name);
+      if(!sq||!sq.length){ box.innerHTML='<p class="muted" style="font-size:.85rem">Full squad list not available from the free feed right now — showing our key players above.</p>'; btn.style.display='none'; return; }
+      box.innerHTML=`<h3 class="display" style="font-size:1rem;margin-bottom:8px">Full squad (${sq.length})</h3>`+
+        sq.map(p=>`<div class="lineup-row"><div class="avatar sq-av" data-name="${p.name.replace(/"/g,'')}" style="${avatarStyle(t)};width:30px;height:30px;font-size:.72rem;border-width:2px">${initials(p.name)}</div>
+          <b style="font-size:.85rem">${p.name}</b><span class="muted" style="margin-left:auto;font-size:.76rem">${p.pos||''} ${p.num?('#'+p.num):''}</span></div>`).join('');
+      btn.style.display='none';
+      box.querySelectorAll('.sq-av').forEach((el,i)=>{ if(sq[i].photo){ const im=new Image(); im.onload=()=>{el.style.backgroundImage=`url('${sq[i].photo}')`;el.classList.add('has-photo');el.textContent='';}; im.src=sq[i].photo; } });
+    };
+  }
+
+  /* -------- confederation view reuses all-grid sorted by conf -------- */
+  function renderConf(){
+    const av=$('#allView'); av.innerHTML='';
+    const confs=[...new Set(TEAMS.map(t=>t.conf))];
+    confs.forEach(cf=>{
+      const head=el('div','section-head'); head.style.cssText='grid-column:1/-1;margin:14px 0 4px';
+      head.innerHTML=`<h2 class="display" style="font-size:1.2rem">${cf}</h2><span class="muted" style="font-size:.85rem">${TEAMS.filter(t=>t.conf===cf).length} teams</span>`;
+      av.appendChild(head);
+      TEAMS.filter(t=>t.conf===cf).sort((a,b)=>a.rank-b.rank).forEach(t=>av.appendChild(teamTile(t)));
+    });
+  }
+
+  /* -------- view switching -------- */
+  $$('.chip[data-view]').forEach(c=>c.onclick=()=>{
+    $$('.chip[data-view]').forEach(x=>x.classList.remove('active')); c.classList.add('active');
+    const v=c.dataset.view;
+    $('#groupsView').style.display = v==='groups'?'grid':'none';
+    $('#allView').style.display = v==='groups'?'none':'grid';
+    if(v==='all') renderAll();
+    if(v==='conf') renderConf();
+  });
+  $('#search').oninput=e=>{
+    const q=e.target.value.trim().toLowerCase();
+    $$('.chip[data-view]').forEach(x=>x.classList.remove('active'));
+    $('.chip[data-view="all"]').classList.add('active');
+    $('#groupsView').style.display='none'; $('#allView').style.display='grid';
+    renderAll(q);
+  };
+
+  renderAll();
+</script>
+</body>
+</html>

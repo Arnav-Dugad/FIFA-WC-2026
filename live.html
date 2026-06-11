@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Match Center — World Cup 2026</title>
+<meta name="description" content="Premium real-time World Cup 2026 match center: live scores & clock, in-play win probability, venue weather, line-ups and a multi-match ticker.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+<style>
+  .ticker{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 14px;scroll-snap-type:x mandatory}
+  .tk-card{flex:0 0 200px;scroll-snap-align:start;background:var(--card);border:1px solid var(--card-border);border-radius:13px;padding:12px 14px;cursor:pointer;transition:.18s}
+  .tk-card:hover{border-color:rgba(0,196,106,.4)}
+  .tk-card.sel{border-color:var(--green);background:rgba(0,196,106,.08)}
+  .tk-top{display:flex;justify-content:space-between;font-size:.66rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+  .tk-row{display:flex;align-items:center;gap:7px;font-size:.86rem;font-weight:600;padding:2px 0}
+  .tk-row img{width:22px;height:15px;border-radius:3px}
+  .tk-row .sc{margin-left:auto;font-family:Oswald;font-size:1rem}
+  .tk-live{color:var(--red)}
+  .wx-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--card-border);padding:7px 13px;border-radius:11px;font-size:.85rem}
+  .pitch{position:relative;height:8px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;display:flex}
+  .winprob-legend{display:flex;justify-content:space-between;font-size:.74rem;margin-top:6px}
+  .formdots{display:flex;gap:4px}.formdots span{width:18px;height:18px;border-radius:5px;font-size:.6rem;display:grid;place-items:center;font-weight:800;color:#04130c}
+</style>
+</head>
+<body data-page="live.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / Live Center</div>
+    <h1 class="display reveal">Live <span style="background:linear-gradient(135deg,#ff4d5e,#ffd24c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Match Center</span></h1>
+    <p class="reveal">Real status, clock and scores update automatically in your local time, with an in-play win-probability model, venue weather and line-ups. Tap any match in the ticker.</p>
+  </div>
+</section>
+
+<!-- MULTI-MATCH TICKER -->
+<section class="section-tight" style="padding:10px 0 0">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <h3 class="display" style="font-size:1rem"><span id="tickerLabel">Matches</span></h3>
+      <span class="muted" style="font-size:.78rem" id="refreshNote">Auto-updating</span>
+    </div>
+    <div class="ticker reveal" id="ticker"></div>
+  </div>
+</section>
+
+<section class="section-tight" style="padding-top:6px">
+  <div class="wrap">
+    <div class="live-wrap">
+      <div class="live-main">
+        <div class="live-scoreboard reveal" id="scoreboard"></div>
+
+        <div class="card reveal" style="padding:24px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <h3 class="display">🔮 Win Probability</h3><span class="muted" style="font-size:.72rem" id="wpMode"></span>
+          </div>
+          <p class="muted" style="font-size:.8rem;margin-bottom:16px">Model blending FIFA rankings with the live score &amp; time remaining. For fun — not betting advice.</p>
+          <div id="winProb"></div>
+        </div>
+
+        <div class="card reveal" style="padding:24px">
+          <h3 class="display" style="margin-bottom:14px">📋 Match Facts &amp; Form</h3>
+          <div id="facts"></div>
+        </div>
+      </div>
+
+      <div class="live-side">
+        <div class="card reveal" style="margin-bottom:20px">
+          <div style="padding:16px 18px;border-bottom:1px solid var(--card-border);display:flex;justify-content:space-between;align-items:center">
+            <h3 class="display">⏱️ Status</h3><span id="statusBadge"></span>
+          </div>
+          <div id="statusPanel" style="padding:16px 18px"></div>
+        </div>
+        <div class="card reveal" id="venueCard" style="padding:18px;margin-bottom:20px"></div>
+        <div class="card reveal" id="lineups" style="padding:18px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/live-data.js"></script>
+<script src="js/app.js"></script>
+<script>
+let CURRENT=null;
+
+function tickerList(){
+  const now=Date.now();
+  const live=MATCHES.filter(m=>m.home&&m.away&&m.status==='live');
+  const today=MATCHES.filter(m=>m.home&&m.away&&Math.abs(new Date(m.kickoff)-now)<20*36e5);
+  const next=MATCHES.filter(m=>m.home&&m.away&&m.status==='upcoming').sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+  const seen=new Set(); const out=[];
+  [...live, ...today.sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff)), ...next].forEach(m=>{ if(!seen.has(m.id)){seen.add(m.id);out.push(m);} });
+  return out.slice(0,14);
+}
+function renderTicker(){
+  const list=tickerList(); const tk=$('#ticker'); tk.innerHTML='';
+  $('#tickerLabel').textContent = list.some(m=>m.status==='live') ? '🔴 Live & upcoming' : 'Upcoming matches';
+  list.forEach(m=>{
+    const h=team(m.home),a=team(m.away); const c=LiveData.matchClock(m); const hasScore=m.hs!=null;
+    const card=el('div','tk-card'+(CURRENT&&m.id===CURRENT.id?' sel':''));
+    const top = c.state==='live'?`<span class="tk-live">🔴 ${c.label}</span>`:c.state==='finished'?'<span>FT</span>':`<span>${localDate(m.kickoff,{month:'short',day:'numeric'})} ${localTime(m.kickoff)}</span>`;
+    card.innerHTML=`<div class="tk-top"><span>${m.stage}</span>${top}</div>
+      <div class="tk-row"><img src="${flag(h.cc)}"> ${h.code}<span class="sc">${hasScore?m.hs:''}</span></div>
+      <div class="tk-row"><img src="${flag(a.cc)}"> ${a.code}<span class="sc">${hasScore?m.as:''}</span></div>`;
+    card.onclick=()=>{ CURRENT=m; renderAll(); renderTicker(); };
+    tk.appendChild(card);
+  });
+}
+
+function renderScoreboard(){
+  const m=CURRENT, h=team(m.home), a=team(m.away), st=stadium(m.stadium), c=LiveData.matchClock(m);
+  const hasScore=m.hs!=null&&m.as!=null;
+  let centre,sub;
+  if(c.state==='upcoming'){ centre=`<span style="font-size:1.7rem">${localTime(m.kickoff)}</span>`; sub=relativeKO(m.kickoff).toUpperCase(); }
+  else if(c.state==='live'){ centre=hasScore?`${m.hs}<span style="opacity:.4">:</span>${m.as}`:'<span style="font-size:1.6rem;opacity:.7">LIVE</span>'; sub='● '+c.label; }
+  else { centre=hasScore?`${m.hs}<span style="opacity:.4">:</span>${m.as}`:'<span style="font-size:1.3rem;opacity:.6">FULL&nbsp;TIME</span>'; sub='FULL TIME'; }
+  $('#scoreboard').innerHTML=`
+    <div class="lsb-top">
+      <span class="match-stage">${m.stage} · ${st.name}</span>
+      <span class="lsb-clock">${c.state==='live'?'<span class="dot"></span> IN PLAY':c.state==='finished'?'FT':localDate(m.kickoff)}</span>
+    </div>
+    <div class="lsb-grid">
+      <div class="lsb-team"><img src="${flag(h.cc)}" alt="${h.name}"><h3 class="display">${h.name}</h3><div class="rank">FIFA #${h.rank}${h.titles?` · ★${h.titles}`:''}</div></div>
+      <div class="lsb-score">${centre}<small>${sub}</small></div>
+      <div class="lsb-team"><img src="${flag(a.cc)}" alt="${a.name}"><h3 class="display">${a.name}</h3><div class="rank">FIFA #${a.rank}${a.titles?` · ★${a.titles}`:''}</div></div>
+    </div>`;
+}
+
+function renderWinProb(){
+  const m=CURRENT, h=team(m.home), a=team(m.away);
+  const c=LiveData.matchClock(m);
+  const w=liveWinProb(m);
+  $('#wpMode').textContent = c.state==='live'?'live model':c.state==='finished'?'result':'pre-match';
+  $('#winProb').innerHTML=`
+    <div class="pitch" style="height:14px"><span class="h" style="width:${w.pH}%;background:var(--green)"></span><span style="width:${w.draw}%;background:rgba(255,255,255,.18)"></span><span class="a" style="width:${w.pA}%;background:var(--gold)"></span></div>
+    <div class="winprob-legend"><b style="color:var(--green)">${h.code} ${w.pH}%</b><span class="muted">Draw ${w.draw}%</span><b style="color:var(--gold)">${w.pA}% ${a.code}</b></div>`;
+}
+
+function formStrip(code){
+  // recent finished results for this team (real, from feed)
+  const ms=MATCHES.filter(m=>(m.home===code||m.away===code)&&m.hs!=null&&m.as!=null).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff)).slice(0,5).reverse();
+  if(!ms.length) return '<span class="muted" style="font-size:.78rem">No results yet</span>';
+  return '<div class="formdots">'+ms.map(m=>{ const gf=m.home===code?m.hs:m.as, ga=m.home===code?m.as:m.hs; const r=gf>ga?'W':gf<ga?'L':'D'; const col=r==='W'?'var(--green)':r==='L'?'var(--red)':'#888'; return `<span style="background:${col};color:#fff">${r}</span>`; }).join('')+'</div>';
+}
+
+function renderFacts(){
+  const m=CURRENT, h=team(m.home), a=team(m.away);
+  const row=(label,hv,av)=>`<div class="stat-row" style="margin-bottom:12px"><div class="sr-label"><b>${hv}</b><span>${label}</span><b>${av}</b></div></div>`;
+  $('#facts').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="text-align:left"><img class="flag-sm" src="${flag(h.cc)}" style="width:30px;height:20px"><div style="font-weight:700;margin-top:4px;font-size:.9rem">${h.name}</div><div class="muted" style="font-size:.72rem">${h.nick||''}</div></div>
+      <div class="display muted">VS</div>
+      <div style="text-align:right"><img class="flag-sm" src="${flag(a.cc)}" style="width:30px;height:20px"><div style="font-weight:700;margin-top:4px;font-size:.9rem">${a.name}</div><div class="muted" style="font-size:.72rem">${a.nick||''}</div></div>
+    </div>
+    ${row('FIFA Ranking','#'+h.rank,'#'+a.rank)}
+    ${row('World Cup titles','★ '+(h.titles||0),'★ '+(a.titles||0))}
+    ${row('Confederation',h.conf,a.conf)}
+    <div class="stat-row"><div class="sr-label"><span>Best WC finish</span></div><div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)"><span>${h.best||'—'}</span><span style="text-align:right">${a.best||'—'}</span></div></div>
+    <div class="stat-row" style="margin-top:10px"><div class="sr-label"><span>Recent form (W/D/L)</span></div><div style="display:flex;justify-content:space-between;margin-top:6px">${formStrip(m.home)}${formStrip(m.away)}</div></div>`;
+}
+
+function renderStatus(){
+  const m=CURRENT, c=LiveData.matchClock(m);
+  const badge=c.state==='live'?'<span class="live-badge">LIVE</span>':c.state==='finished'?'<span class="pill pill-gold" style="padding:3px 10px">FULL TIME</span>':'<span class="pill pill-green" style="padding:3px 10px">UPCOMING</span>';
+  $('#statusBadge').innerHTML=badge;
+  let line;
+  if(c.state==='upcoming') line=`Kicks off <b style="color:var(--green)">${relativeKO(m.kickoff)}</b><br>${localDateFull(m.kickoff)}<br><b>${localTime(m.kickoff)} ${tzAbbr}</b> (your time)`;
+  else if(c.state==='live') line=`In play — <b style="color:var(--red)">${c.label}</b><br>Score &amp; clock refresh automatically.`;
+  else line=`Full time.<br>${localDateFull(m.kickoff)}`;
+  $('#statusPanel').innerHTML=`<p style="font-size:.92rem;line-height:1.7">${line}</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-gold" style="flex:1;justify-content:center;padding:10px" onclick='downloadICS(${JSON.stringify({id:m.id,home:m.home,away:m.away,homeLabel:m.homeLabel,awayLabel:m.awayLabel,stadium:m.stadium,kickoff:m.kickoff,stage:m.stage})})'>📅 Calendar</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;padding:10px" id="followBtn"></button>
+    </div>`;
+  const fb=$('#followBtn'); const on=isFav(m.home)||isFav(m.away);
+  fb.innerHTML = on?'★ Following':'☆ Follow';
+  fb.onclick=()=>{ toggleFav(m.home); renderStatus(); };
+}
+
+function renderVenue(){
+  const m=CURRENT, st=stadium(m.stadium);
+  $('#venueCard').innerHTML=`<h3 class="display" style="margin-bottom:10px">🏟️ Venue &amp; Weather</h3>
+    <div class="lineup-row"><span>📍 Stadium</span><b style="margin-left:auto;text-align:right">${st.name}</b></div>
+    <div class="lineup-row"><span>🏙️ City</span><b style="margin-left:auto">${st.city}, ${st.country}</b></div>
+    <div class="lineup-row"><span>👥 Capacity</span><b style="margin-left:auto">${(st.cap||0).toLocaleString()}</b></div>
+    <div class="lineup-row" style="border:none"><span>${st.roof?'⛱️ Roof':'☀️ Open air'}</span><b style="margin-left:auto" id="wxSlot">…</b></div>
+    <a href="stadiums.html" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:12px">🗺️ Map &amp; details</a>`;
+  fetchVenueWeather(st, m.kickoff).then(wx=>{ const s=$('#wxSlot'); if(s) s.innerHTML = wx? `${wx.emoji} ${wx.temp}°C · ${wx.label}` : '—'; });
+}
+
+function renderLineups(){
+  const m=CURRENT, h=team(m.home), a=team(m.away);
+  const col=code=>{ const list=PLAYERS.filter(p=>p.team===code).slice(0,6);
+    return list.length?list.map(p=>`<div class="lineup-row"><span class="ln">${p.num}</span><b style="font-size:.82rem">${p.name.split(' ').pop()}</b><span class="pos-badge pos-${p.pos}" style="margin-left:auto">${p.pos}</span></div>`).join(''):'<span class="muted" style="font-size:.78rem">Squad TBD</span>'; };
+  $('#lineups').innerHTML=`<h3 class="display" style="margin-bottom:10px">👕 Players to Watch</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><div style="font-size:.74rem;font-weight:700;color:var(--green);margin-bottom:4px">${h.code}</div>${col(m.home)}</div>
+      <div><div style="font-size:.74rem;font-weight:700;color:var(--gold);margin-bottom:4px">${a.code}</div>${col(m.away)}</div>
+    </div>`;
+}
+
+function renderAll(){ if(!CURRENT)return; renderScoreboard(); renderWinProb(); renderFacts(); renderStatus(); renderVenue(); renderLineups(); }
+
+function boot(){
+  const list=tickerList();
+  if(!CURRENT || !list.find(x=>x.id===CURRENT.id)) CURRENT = list.find(m=>m.status==='live') || list[0];
+  if(CURRENT){ renderTicker(); renderAll(); }
+}
+
+LiveData.refresh(boot);
+setInterval(()=>LiveData.refresh(()=>{ renderTicker(); renderAll(); }), 20000);   // live score/status refresh
+setInterval(()=>{ if(CURRENT && LiveData.matchClock(CURRENT).state!=='finished'){ renderScoreboard(); renderWinProb(); renderStatus(); } }, 1000); // local clock tick
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knockout Bracket — World Cup 2026</title>
+<meta name="description" content="The World Cup 2026 knockout bracket with live third-place projection and the path to the MetLife final — in your local time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+<style>
+  .funnel{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+  .funnel .step{display:flex;align-items:center;gap:6px}
+  .funnel .dot{padding:6px 13px;border-radius:999px;background:var(--card);border:1px solid var(--card-border);font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;transition:.18s;white-space:nowrap}
+  .funnel .dot.active{background:var(--grad-hero);color:#04130c;border-color:transparent}
+  .funnel .dot.final{border-color:var(--gold);color:var(--gold)}
+  .funnel .arrow{color:var(--faint)}
+  .ko-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+  .ko-card{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:.2s}
+  .ko-card:hover{border-color:rgba(0,196,106,.4);transform:translateY(-3px)}
+  .ko-card.final{border-color:var(--gold);box-shadow:0 0 30px -10px rgba(255,210,76,.5)}
+  .ko-meta{font-size:.7rem;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:10px}
+  .ko-team{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:.95rem;font-weight:600}
+  .ko-team img{width:26px;height:18px;border-radius:3px;object-fit:cover}
+  .ko-team.win{color:var(--gold)}
+  .ko-team .sc{margin-left:auto;font-family:'Oswald';font-size:1.1rem}
+  .ko-tbd{color:var(--muted);font-style:italic;font-weight:400;font-size:.85rem}
+  .ko-vs{border-top:1px solid var(--card-border)}
+  .hl{outline:2px solid var(--gold);outline-offset:1px}
+  .qual-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .qual-cell{background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:10px 12px;font-size:.85rem}
+  .qual-cell .gl{font-size:.7rem;color:var(--green);font-weight:700;margin-bottom:4px}
+  .third-table{width:100%;border-collapse:collapse;font-size:.84rem}
+  .third-table th{font-size:.66rem;text-transform:uppercase;color:var(--muted);padding:8px 6px;text-align:center}
+  .third-table td{padding:8px 6px;text-align:center;border-top:1px solid var(--card-border)}
+  .third-table .tn{text-align:left;display:flex;align-items:center;gap:8px;font-weight:600}
+  .third-table .tn img{width:22px;height:15px;border-radius:3px}
+  .third-table tr.in{box-shadow:inset 3px 0 0 var(--green)}
+  .third-table tr.out{opacity:.5}
+</style>
+</head>
+<body data-page="bracket.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / Bracket</div>
+    <h1 class="display reveal">The Road to <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">MetLife</span></h1>
+    <p class="reveal">A 32-team knockout phase for the first time. Pick a round below — no endless scrolling. The bracket auto-fills from results, including the eight best third-placed teams.</p>
+  </div>
+</section>
+
+<!-- TRACE A TEAM + ROUND SELECTOR -->
+<section class="section-tight" style="padding-top:8px">
+  <div class="wrap">
+    <div class="filterbar reveal" style="margin-bottom:18px">
+      <span class="muted" style="font-size:.85rem">🔦 Trace a team:</span>
+      <select id="traceTeam" class="search-input" style="max-width:240px"><option value="">— none —</option></select>
+    </div>
+    <div class="funnel reveal" id="funnel"></div>
+    <div class="ko-grid reveal" id="koGrid"></div>
+  </div>
+</section>
+
+<!-- QUALIFICATION TRACKER -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal"><div><div class="eyebrow">Live from the groups</div><h2 class="display">Qualification <span class="display">Tracker</span></h2></div></div>
+    <div class="qual-grid reveal" id="qualGrid"></div>
+    <p class="muted reveal" style="font-size:.82rem;margin-top:10px"><span style="color:var(--green)">●</span> Group winner &nbsp; <span style="color:var(--gold)">●</span> Runner-up — both advance automatically.</p>
+  </div>
+</section>
+
+<!-- BEST THIRD-PLACED TEAMS -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal"><div><div class="eyebrow">8 of 12 advance</div><h2 class="display">Best <span class="display">Third-Placed</span> Teams</h2></div></div>
+    <div class="card reveal" style="padding:6px 10px;overflow-x:auto">
+      <table class="third-table" id="thirdTable"></table>
+    </div>
+    <p class="muted reveal" style="font-size:.82rem;margin-top:10px">Ranked by points, then goal difference, then goals scored. The top eight qualify and are slotted into the Round of 32. Updates live as group results land.</p>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/live-data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  LiveData.applyStatus(); resolveKnockout();
+  const rounds=['Round of 32','Round of 16','Quarter-final','Semi-final','Third place','FINAL'];
+  const shortName={'Round of 32':'R32','Round of 16':'R16','Quarter-final':'QF','Semi-final':'SF','Third place':'3rd','FINAL':'Final'};
+  let currentRound='Round of 32', traceCode='';
+
+  // default to the round whose matches are nearest in the future
+  (function pickDefault(){
+    const now=Date.now();
+    for(const r of rounds){ const ms=MATCHES.filter(m=>m.stage===r); if(ms.some(m=>new Date(m.kickoff).getTime()>now-6*36e5)){ currentRound=r; break; } }
+  })();
+
+  // populate trace dropdown
+  const sel=$('#traceTeam');
+  TEAMS.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(t=>{ const o=document.createElement('option'); o.value=t.code; o.textContent=t.name; sel.appendChild(o); });
+  sel.onchange=()=>{ traceCode=sel.value; render(); };
+
+  function funnel(){
+    const f=$('#funnel'); f.innerHTML='';
+    rounds.forEach((r,i)=>{
+      const cnt=MATCHES.filter(m=>m.stage===r).length;
+      const step=el('div','step');
+      step.innerHTML=`<span class="dot ${r===currentRound?'active':''} ${r==='FINAL'?'final':''}" data-r="${r}">${shortName[r]} <span style="opacity:.6">·${cnt}</span></span>${i<rounds.length-1?'<span class="arrow">→</span>':''}`;
+      f.appendChild(step);
+    });
+    f.querySelectorAll('.dot').forEach(d=>d.onclick=()=>{ currentRound=d.dataset.r; render(); });
+  }
+
+  function teamInMatch(m){ return traceCode && (m.home===traceCode||m.away===traceCode); }
+
+  function koCard(m){
+    const st=stadium(m.stadium);
+    const card=el('div','ko-card'+(m.stage==='FINAL'?' final':'')+(teamInMatch(m)?' hl':''));
+    const hasScore=m.hs!=null&&m.as!=null;
+    const winSide = hasScore&&m.hs!==m.as ? (m.hs>m.as?'home':'away') : null;
+    const side=(code,label,which)=>{ const t=sideTeam(code,label);
+      return `<div class="ko-team ${t.tbd?'ko-tbd':''} ${winSide===which?'win':''}">
+        <img src="${flag(t.cc)}"> <span>${t.name}</span>
+        ${hasScore&&code?`<span class="sc">${which==='home'?m.hs:m.as}</span>`:''}</div>`; };
+    card.innerHTML=`<div class="ko-meta"><span>🗓️ ${localDate(m.kickoff,{month:'short',day:'numeric'})} · ${localTime(m.kickoff)}</span><span>📍 ${st.city}</span></div>
+      ${side(m.home,m.homeLabel,'home')}<div class="ko-vs"></div>${side(m.away,m.awayLabel,'away')}`;
+    card.onclick=()=>matchDetail(m);
+    return card;
+  }
+
+  function render(){
+    funnel();
+    const grid=$('#koGrid'); grid.innerHTML='';
+    MATCHES.filter(m=>m.stage===currentRound).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff)).forEach(m=>grid.appendChild(koCard(m)));
+    renderQual(); renderThirds();
+  }
+
+  function renderQual(){
+    const qg=$('#qualGrid'); qg.innerHTML='';
+    GROUPS.forEach(g=>{
+      const t=computeStandings(g); const w=team(t[0].code), r=team(t[1].code);
+      const cell=el('div','qual-cell');
+      cell.innerHTML=`<div class="gl">GROUP ${g}</div>
+        <div class="ko-team" style="padding:3px 0;font-size:.85rem"><span style="color:var(--green)">●</span> <img src="${flag(w.cc)}"> ${w.name}</div>
+        <div class="ko-team" style="padding:3px 0;font-size:.85rem"><span style="color:var(--gold)">●</span> <img src="${flag(r.cc)}"> ${r.name}</div>`;
+      qg.appendChild(cell);
+    });
+  }
+
+  function renderThirds(){
+    const all=GROUPS.map(g=>{ const s=computeStandings(g)[2]; return {g, code:s.code, Pts:s.Pts, GD:s.GF-s.GA, GF:s.GF}; })
+      .sort((a,b)=>b.Pts-a.Pts||b.GD-a.GD||b.GF-a.GF||team(a.code).rank-team(b.code).rank);
+    const t=$('#thirdTable');
+    t.innerHTML=`<thead><tr><th style="text-align:left;padding-left:10px">#</th><th style="text-align:left">Team</th><th>Grp</th><th>Pts</th><th>GD</th><th>GF</th><th>Status</th></tr></thead>
+      <tbody>${all.map((r,i)=>{const tm=team(r.code);return `<tr class="${i<8?'in':'out'}">
+        <td style="text-align:left;padding-left:10px">${i+1}</td>
+        <td class="tn"><img src="${flag(tm.cc)}"> ${tm.name}</td>
+        <td>${r.g}</td><td>${r.Pts}</td><td>${r.GD>0?'+':''}${r.GD}</td><td>${r.GF}</td>
+        <td>${i<8?'<span style="color:var(--green);font-weight:700">Qualify</span>':'<span class="muted">Out</span>'}</td></tr>`;}).join('')}</tbody>`;
+  }
+
+  LiveData.refresh(render);
+  setInterval(()=>LiveData.refresh(render), 60000);
+</script>
+</body>
+</html>

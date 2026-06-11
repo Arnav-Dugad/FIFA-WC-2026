@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stadiums &amp; Host Cities — World Cup 2026</title>
+<meta name="description" content="All 16 World Cup 2026 stadiums across the USA, Canada and Mexico — capacities, features and interactive maps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+<style>.leaflet-container{background:#0a0f1c;font-family:inherit}.leaflet-popup-content-wrapper{background:var(--surface);color:var(--text);border-radius:10px}.leaflet-popup-tip{background:var(--surface)}</style>
+</head>
+<body data-page="stadiums.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / Stadiums</div>
+    <h1 class="display reveal">16 Cities, <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">One Continent</span></h1>
+    <p class="reveal">From the historic Estadio Azteca to glittering SoFi Stadium, explore every venue with an interactive map of its real location. The final lands at MetLife Stadium on July 19, 2026.</p>
+  </div>
+</section>
+
+<!-- OVERVIEW MAP -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="card reveal" style="padding:0;overflow:hidden">
+      <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h3 class="display">🗺️ All 16 Host Venues</h3>
+        <span class="muted" style="font-size:.85rem">🇺🇸 11 USA · 🇨🇦 2 Canada · 🇲🇽 3 Mexico</span>
+      </div>
+      <div id="overviewMap" style="height:420px"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="wrap">
+    <div class="filterbar reveal">
+      <button class="chip active" data-c="all">All Venues</button>
+      <button class="chip" data-c="us">🇺🇸 USA</button>
+      <button class="chip" data-c="ca">🇨🇦 Canada</button>
+      <button class="chip" data-c="mx">🇲🇽 Mexico</button>
+      <button class="chip" data-c="roof">⛱️ Covered/Roofed</button>
+    </div>
+    <div class="grid stadiums-grid reveal" id="stadiumGrid"></div>
+  </div>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  const DARK_TILES='https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  const ATTR='&copy; OpenStreetMap &copy; CARTO';
+
+  /* overview map */
+  const omap = L.map('overviewMap',{scrollWheelZoom:false,attributionControl:false}).setView([39,-98],3.4);
+  L.tileLayer(DARK_TILES,{attribution:ATTR,subdomains:'abcd',maxZoom:18}).addTo(omap);
+  const goldIcon = L.divIcon({className:'',html:'<div style="background:#ffd24c;width:16px;height:16px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #1a1200;box-shadow:0 0 10px rgba(255,210,76,.8)"></div>',iconSize:[16,16],iconAnchor:[8,16]});
+  STADIUMS.forEach(s=>{
+    L.marker([s.lat,s.lng],{icon:goldIcon}).addTo(omap)
+      .bindPopup(`<b>${s.name}</b><br>${s.city}, ${s.country}<br><span style="color:#00c46a">${s.cap.toLocaleString()} capacity</span>`);
+  });
+
+  /* stadium cards w/ mini maps */
+  const grid=$('#stadiumGrid');
+  const maps={};
+  function render(filter){
+    grid.innerHTML=''; Object.values(maps).forEach(m=>m.remove());
+    let list=[...STADIUMS];
+    if(filter==='roof') list=list.filter(s=>s.roof);
+    else if(filter&&filter!=='all') list=list.filter(s=>s.cc===filter);
+    list.forEach(s=>{
+      const card=el('div','card stadium-card');
+      const mapId='m_'+s.id;
+      card.innerHTML=`
+        <div class="stadium-hero">
+          <img class="sh-img" src="${cityImg(s.id,s.city)}" alt="${s.name}">
+          <span class="sh-cap">👥 ${s.cap.toLocaleString()}</span>
+          <div class="sh-city"><img src="${flag(s.cc)}" alt=""><b>${s.city}</b></div>
+        </div>
+        <div class="stadium-body">
+          <h3 class="display">${s.name}</h3>
+          <div class="stadium-meta">
+            <span>🏟️ <b>${s.cap.toLocaleString()}</b> seats</span>
+            <span>📅 Opened <b>${s.opened}</b></span>
+            <span>${s.roof?'⛱️ <b>Roof / Cover</b>':'☀️ <b>Open air</b>'}</span>
+          </div>
+          <p class="note">${s.note}</p>
+        </div>
+        <div class="stadium-map" id="${mapId}"></div>`;
+      grid.appendChild(card);
+      loadVenuePhoto(card.querySelector('.sh-img'), s.wiki);   // real photo from Wikipedia, SVG fallback
+      setTimeout(()=>{
+        const m=L.map(mapId,{scrollWheelZoom:false,zoomControl:false,attributionControl:false}).setView([s.lat,s.lng],14);
+        L.tileLayer(DARK_TILES,{subdomains:'abcd',maxZoom:18}).addTo(m);
+        L.marker([s.lat,s.lng],{icon:goldIcon}).addTo(m);
+        maps[s.id]=m;
+      },50);
+    });
+  }
+  $$('.chip[data-c]').forEach(c=>c.onclick=()=>{$$('.chip[data-c]').forEach(x=>x.classList.remove('active'));c.classList.add('active');render(c.dataset.c);});
+  render('all');
+</script>
+</body>
+</html>

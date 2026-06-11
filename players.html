@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Star Players — World Cup 2026</title>
+<meta name="description" content="The icons, goal machines and wonderkids of World Cup 2026 — profiles, positions and form ratings.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="players.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / Players</div>
+    <h1 class="display reveal">The <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Superstars</span></h1>
+    <p class="reveal">From Messi's last dance to Yamal's first World Cup — the players who will define the summer. Filter by position or search by name and nation.</p>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="wrap">
+    <div class="filterbar reveal">
+      <input class="search-input" id="search" placeholder="🔍 Search players, clubs, nations…">
+      <span style="width:1px;height:26px;background:var(--card-border)"></span>
+      <button class="chip active" data-p="all">All</button>
+      <button class="chip" data-p="hot">🔥 Headliners</button>
+      <button class="chip" data-p="FW">Forwards</button>
+      <button class="chip" data-p="MF">Midfield</button>
+      <button class="chip" data-p="DF">Defenders</button>
+      <button class="chip" data-p="GK">Keepers</button>
+    </div>
+    <div class="grid players-grid reveal" id="playerGrid"></div>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  let fp='all', fs='';
+  function card(p){
+    const t=team(p.team);
+    const c=el('div','card player-card');
+    c.innerHTML=`
+      <div class="player-top">
+        <img class="player-flag" src="${flag(t.cc)}" alt="${t.name}">
+        <span class="player-num">${p.num}</span>
+        <div class="avatar" style="${avatarStyle(t)}">${initials(p.name)}</div>
+      </div>
+      <div class="player-body">
+        <span class="pos-badge pos-${p.pos}">${p.pos}</span>
+        ${p.hot?'<span class="pos-badge" style="background:rgba(255,77,94,.16);color:var(--red)">🔥 HOT</span>':''}
+        <h4>${p.name}</h4>
+        <div class="club">${p.club} · ${t.name}</div>
+        <div class="player-stats">
+          <div class="ps"><b>${p.age}</b><span>Age</span></div>
+          <div class="ps"><b>${p.goals}</b><span>Goals</span></div>
+          <div class="ps"><b>${p.assists}</b><span>Assists</span></div>
+          <div class="ps"><b>${p.rating}</b><span>Rating</span></div>
+        </div>
+      </div>`;
+    c.onclick=()=>playerModal(p);
+    const av=c.querySelector('.avatar'); av.dataset.player=p.name; photoObserver.observe(av);
+    return c;
+  }
+  // lazy-load headshots only when a card scrolls into view (avoids 120 requests at once)
+  const photoObserver=new IntersectionObserver((es)=>es.forEach(e=>{ if(e.isIntersecting){ const av=e.target; photoObserver.unobserve(av); loadPlayerPhoto(av, av.dataset.player); } }),{rootMargin:'200px'});
+  function playerModal(p){
+    const t=team(p.team);
+    showModal(`
+      <div class="modal-hero" style="background:linear-gradient(150deg,${t.c1},${t.c2})">
+        <div class="avatar" id="pmAvatar" style="${avatarStyle(t)};width:84px;height:84px;font-size:1.7rem">${initials(p.name)}</div></div>
+      <div class="modal-body">
+        <span class="pos-badge pos-${p.pos}">${p.pos==='GK'?'Goalkeeper':p.pos==='DF'?'Defender':p.pos==='MF'?'Midfielder':'Forward'}</span>
+        <h2 style="margin:10px 0 2px">${p.name}</h2>
+        <p class="sub"><img class="flag-sm" src="${flag(t.cc)}" style="display:inline;vertical-align:middle"> ${t.name} · #${p.num} · ${p.club}</p>
+        <div class="kv-grid">
+          <div class="kv"><span>Age</span><b>${p.age}</b></div>
+          <div class="kv"><span>Form Rating</span><b>${p.rating} / 10</b></div>
+          <div class="kv"><span>Goals (WC26)</span><b>${p.goals}</b></div>
+          <div class="kv"><span>Assists (WC26)</span><b>${p.assists}</b></div>
+        </div>
+        <p id="pmBio" style="color:var(--muted)">One of the standout names of Group ${t.group}, ${p.name.split(' ').pop()} carries the hopes of ${t.name} into World Cup 2026.</p>
+        <a href="live.html" class="btn btn-primary" style="margin-top:18px">Follow live →</a>
+      </div>`);
+    loadPlayerPhoto($('#pmAvatar'), p.name);
+    wikiSummary(p.name).then(o=>{ if(o&&o.extract&&$('#pmBio')) $('#pmBio').textContent=o.extract; });
+  }
+  function render(){
+    const g=$('#playerGrid'); g.innerHTML='';
+    let list=[...PLAYERS];
+    if(fp==='hot') list=list.filter(p=>p.hot);
+    else if(fp!=='all') list=list.filter(p=>p.pos===fp);
+    if(fs) list=list.filter(p=>{const t=team(p.team);return `${p.name} ${p.club} ${t.name}`.toLowerCase().includes(fs);});
+    list.sort((a,b)=>b.rating-a.rating);
+    if(!list.length){g.innerHTML='<div class="empty" style="grid-column:1/-1">No players found.</div>';return;}
+    list.forEach(p=>g.appendChild(card(p)));
+  }
+  $$('.chip[data-p]').forEach(c=>c.onclick=()=>{$$('.chip[data-p]').forEach(x=>x.classList.remove('active'));c.classList.add('active');fp=c.dataset.p;render();});
+  $('#search').oninput=e=>{fs=e.target.value.trim().toLowerCase();render();};
+  render();
+</script>
+</body>
+</html>

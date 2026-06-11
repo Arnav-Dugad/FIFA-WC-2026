@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>News — World Cup 2026</title>
+<meta name="description" content="The latest World Cup 2026 news, analysis, features and team updates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="news.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / News</div>
+    <h1 class="display reveal">World Cup <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Newsroom</span></h1>
+    <p class="reveal">Headlines, analysis, tactics and team updates from across the tournament — published in your local time.</p>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="wrap">
+    <div class="filterbar reveal" id="catChips">
+      <button class="chip active" data-cat="all">All</button>
+    </div>
+    <div class="grid news-grid reveal" id="newsGrid"></div>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  const cats=[...new Set(NEWS.map(n=>n.cat))];
+  const cc=$('#catChips');
+  cats.forEach(c=>{const b=el('button','chip',c);b.dataset.cat=c;cc.appendChild(b);});
+  let fc='all';
+  function open(n){
+    showModal(`<div class="news-img" style="height:200px;border-radius:22px 22px 0 0"><span class="cat">${n.cat}</span><img src="${cityImg(n.img,n.img)}" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+      <div class="modal-body"><p class="sub">${localDateFull(n.date)} · ${localTime(n.date)} ${tzAbbr}</p>
+      <h2 style="margin-bottom:12px">${n.title}</h2>
+      <p style="color:var(--muted)">${n.blurb}</p>
+      <p style="color:var(--muted);margin-top:12px">Our reporters bring you reaction, tactical breakdowns and the numbers behind the story as the first 48-team World Cup unfolds across the United States, Canada and Mexico. Stay with us for live updates throughout the tournament.</p>
+      <a href="live.html" class="btn btn-primary" style="margin-top:18px">Go to Live Center →</a></div>`);
+  }
+  function render(){
+    const g=$('#newsGrid');g.innerHTML='';
+    let list=[...NEWS].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    if(fc!=='all')list=list.filter(n=>n.cat===fc);
+    list.forEach((n,i)=>{
+      const c=el('div','card news-card'+(i===0&&fc==='all'?' news-feature':''));
+      const venue=stadium(n.img);
+      c.innerHTML=`<div class="news-img"><span class="cat">${n.cat}</span><img src="${cityImg(n.img,venue.city||n.img)}" alt=""></div>
+        <div class="news-body"><div class="date">${localDate(n.date,{weekday:'short',month:'short',day:'numeric'})} · ${localTime(n.date)}</div>
+        <h3>${n.title}</h3><p class="blurb">${n.blurb}</p>
+        <span class="link-more">Read story →</span></div>`;
+      c.onclick=()=>open(n);
+      g.appendChild(c);
+      loadVenuePhoto(c.querySelector('.news-img img'), venue.wiki);
+    });
+  }
+  $$('#catChips .chip').forEach(c=>c.onclick=()=>{$$('#catChips .chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');fc=c.dataset.cat;render();});
+  render();
+</script>
+</body>
+</html>

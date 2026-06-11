@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stats &amp; Standings — World Cup 2026</title>
+<meta name="description" content="Live World Cup 2026 group standings, top scorers, assists, form ratings and tournament leaderboards.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+</head>
+<body data-page="stats.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / Stats</div>
+    <h1 class="display reveal">Stats &amp; <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Standings</span></h1>
+    <p class="reveal">All 12 group tables update from results in real time, alongside the race for the Golden Boot, Golden Glove and tournament leaderboards.</p>
+  </div>
+</section>
+
+<!-- TOURNAMENT PULSE -->
+<section class="section-tight">
+  <div class="wrap grid reveal" id="pulse" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"></div>
+</section>
+
+<!-- LEADERBOARDS -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal"><div><div class="eyebrow">The races</div><h2 class="display">Golden Boot &amp; <span class="display">Leaders</span></h2></div></div>
+    <div class="grid reveal" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+      <div class="card" style="padding:20px"><h3 class="display" style="margin-bottom:14px">🥇 Golden Boot — Goals</h3><div id="lbGoals"></div></div>
+      <div class="card" style="padding:20px"><h3 class="display" style="margin-bottom:14px">🎯 Top Assists</h3><div id="lbAssists"></div></div>
+      <div class="card" style="padding:20px"><h3 class="display" style="margin-bottom:14px">⭐ Best Form Rating</h3><div id="lbRating"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FULL STANDINGS -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal"><div><div class="eyebrow">Every group</div><h2 class="display">Live <span class="display">Standings</span></h2></div>
+      <a href="teams.html" class="link-more">Team profiles →</a></div>
+    <div class="grid groups-grid reveal" id="standings"></div>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/live-data.js"></script>
+<script src="js/app.js"></script>
+<script>
+  /* tournament pulse (re-rendered on each live refresh) */
+  function renderPulse(){
+    const scored = MATCHES.filter(m=>m.hs!=null&&m.as!=null);
+    const live = MATCHES.filter(m=>m.status==='live');
+    const goals = scored.reduce((s,m)=>s+m.hs+m.as,0);
+    const played = scored.length;
+    const pulses=[
+      ['⚽',goals,'Goals scored'],['🏟️',played,'Matches played'],['🔴',live.length,'Live now'],
+      ['📅',MATCHES.filter(m=>m.status==='upcoming'&&m.home).length,'Upcoming'],
+      ['🌍',TEAMS.length,'Teams'],['🥅', played? (goals/Math.max(1,played)).toFixed(1):'–','Goals / game'],
+    ];
+    $('#pulse').innerHTML = pulses.map(([i,v,l])=>`<div class="card" style="padding:20px;text-align:center">
+      <div style="font-size:1.5rem">${i}</div>
+      <b style="font-family:Oswald;font-size:2rem;display:block;color:var(--gold);line-height:1.1">${v}</b>
+      <span class="muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:1px">${l}</span></div>`).join('');
+  }
+
+  /* leaderboards */
+  function lbRow(rank,p,val,unit){
+    const t=team(p.team);
+    return `<div class="lineup-row"><span class="ln" style="color:var(--gold);font-weight:700">${rank}</span>
+      <div class="avatar" style="${avatarStyle(t)};width:30px;height:30px;font-size:.8rem;border-width:2px">${initials(p.name)}</div>
+      <div><b style="font-size:.9rem">${p.name}</b><div class="muted" style="font-size:.72rem">${t.name}</div></div>
+      <b style="margin-left:auto;font-family:Oswald;color:var(--green);font-size:1.1rem">${val}<small style="color:var(--muted);font-size:.62rem;font-weight:400"> ${unit}</small></b></div>`;
+  }
+  const byGoals=[...PLAYERS].sort((a,b)=>b.goals-a.goals||b.rating-a.rating).slice(0,6);
+  const byAssist=[...PLAYERS].sort((a,b)=>b.assists-a.assists||b.rating-a.rating).slice(0,6);
+  const byRating=[...PLAYERS].sort((a,b)=>b.rating-a.rating).slice(0,6);
+  $('#lbGoals').innerHTML=byGoals.map((p,i)=>lbRow(i+1,p,p.goals,'gls')).join('');
+  $('#lbAssists').innerHTML=byAssist.map((p,i)=>lbRow(i+1,p,p.assists,'ast')).join('');
+  $('#lbRating').innerHTML=byRating.map((p,i)=>lbRow(i+1,p,p.rating,'/10')).join('');
+
+  /* standings (reuse component) */
+  function renderStandings(){
+    const st=$('#standings'); st.innerHTML='';
+    GROUPS.forEach(g=>{
+      const table=computeStandings(g);
+      const card=el('div','card group-card');
+      const rows=table.map((r,i)=>{const t=team(r.code);
+        return `<tr class="${i<2?'qual':''}"><td class="tname"><span class="tname"><img src="${flag(t.cc)}"> ${t.name}</span></td>
+        <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td><td>${r.GF-r.GA>0?'+':''}${r.GF-r.GA}</td><td class="pts">${r.Pts}</td></tr>`;}).join('');
+      card.innerHTML=`<div class="group-head"><span class="gl">${g}</span><h3 class="display">Group ${g}</h3></div>
+        <table class="standings"><thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
+      st.appendChild(card);
+    });
+  }
+
+  function renderStatsPage(){ renderPulse(); renderStandings(); }
+  LiveData.refresh(renderStatsPage);
+  setInterval(()=>LiveData.refresh(renderStatsPage), 60000);
+</script>
+</body>
+</html>
