@@ -52,6 +52,32 @@
       <div class="live-main">
         <div class="live-scoreboard reveal" id="scoreboard"></div>
 
+        <div class="card reveal" id="pitchCard" style="padding:20px;display:none">
+          <div class="pitch-head">
+            <h3 class="display">🟢 Tactical Pitch</h3>
+            <div class="form-badges" id="formBadges"></div>
+          </div>
+          <div class="poss-meter">
+            <div class="poss-row"><b id="possH" style="color:var(--green)">50%</b><span class="muted">Momentum / possession (model)</span><b id="possA" style="color:var(--gold)">50%</b></div>
+            <div class="poss-bar"><span id="possFill"></span></div>
+          </div>
+          <div class="pitch-wrap"><canvas id="pitchCanvas"></canvas></div>
+          <div class="pitch-controls">
+            <div class="pitch-toggles" id="pitchToggles">
+              <button class="chip mini on" data-opt="heat">🔥 Heat</button>
+              <button class="chip mini on" data-opt="markers">⚽ Goals</button>
+              <button class="chip mini on" data-opt="names">🅰 Names</button>
+            </div>
+            <div class="goal-timeline" id="goalTimeline"></div>
+          </div>
+          <p class="pitch-caption">Tactical view — player movement &amp; passing are an illustrative animation, not live tracking. Formations, goals, scorers &amp; minutes are real (feed).</p>
+        </div>
+
+        <div class="card reveal" id="eventsCard" style="padding:24px;display:none">
+          <h3 class="display" style="margin-bottom:14px">⚽ Goal Timeline</h3>
+          <div id="events"></div>
+        </div>
+
         <div class="card reveal" style="padding:24px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
             <h3 class="display">🔮 Win Probability</h3><span class="muted" style="font-size:.72rem" id="wpMode"></span>
@@ -82,9 +108,10 @@
 
 <script src="js/data.js"></script>
 <script src="js/live-data.js"></script>
+<script src="js/pitch.js"></script>
 <script src="js/app.js"></script>
 <script>
-let CURRENT=null;
+let CURRENT=null, pitch=null;
 
 function tickerList(){
   const now=Date.now();
@@ -202,17 +229,77 @@ function renderLineups(){
     </div>`;
 }
 
-function renderAll(){ if(!CURRENT)return; renderScoreboard(); renderWinProb(); renderFacts(); renderStatus(); renderVenue(); renderLineups(); }
+function renderEvents(){
+  const m=CURRENT, h=team(m.home), a=team(m.away);
+  const card=$('#eventsCard');
+  if(!m.scorers || !((m.scorers.home||[]).length || (m.scorers.away||[]).length)){ card.style.display='none'; return; }
+  card.style.display='';
+  const all=[
+    ...(m.scorers.home||[]).map(g=>({...g,side:'home'})),
+    ...(m.scorers.away||[]).map(g=>({...g,side:'away'}))
+  ].sort((x,y)=>parseInt(x.minute)-parseInt(y.minute));
+  $('#events').innerHTML=all.map(g=>{
+    const t=team(g.side==='home'?m.home:m.away);
+    return `<div class="lineup-row" style="${g.side==='away'?'flex-direction:row-reverse;text-align:right':''}">
+      <span class="ln" style="color:var(--gold)">${g.minute}'</span>
+      <span style="font-size:1.1rem">⚽</span>
+      <b style="font-size:.88rem">${g.name}</b>
+      <img class="flag-sm" src="${flag(t.cc)}" style="margin-${g.side==='away'?'right':'left'}:auto">
+    </div>`;
+  }).join('') + (m.ht?`<div class="muted" style="font-size:.74rem;text-align:center;margin-top:8px">Half-time: ${m.ht[0]}–${m.ht[1]}</div>`:'');
+}
+let _pitchMatchId=null, _goalIdx=-1;
+function makePitch(m){ return createPitch($('#pitchCanvas'), m, {compact:false, autoReplay:true, onReplayState:onReplayState}); }
+function onReplayState(active){ const pb=document.getElementById('playAll'); if(pb) pb.innerHTML = active? '⏸' : '▶'; }
 
+function renderBadges(){
+  const f=pitch.formations(), h=team(CURRENT.home), a=team(CURRENT.away);
+  const tag=(t,fm,src)=>`<span class="fbadge"><img src="${flag(t.cc)}">${t.code} <b>${fm}</b><i>${src==='feed'?'lineup':'proj'}</i></span>`;
+  $('#formBadges').innerHTML = tag(h,f.home,f.homeSrc)+tag(a,f.away,f.awaySrc);
+}
+function renderTimeline(){
+  const tl=$('#goalTimeline'); const gs=pitch.goals();
+  if(!gs.length){ tl.innerHTML='<span class="muted" style="font-size:.76rem">No goals to replay</span>'; return; }
+  const pins=gs.map((g,i)=>{ const t=team(g.side==='home'?CURRENT.home:CURRENT.away);
+    return `<button class="goal-pin ${i===_goalIdx?'on':''}" data-i="${i}" title="${g.name}"><span class="gm">${g.minute}'</span><img src="${flag(t.cc)}"></button>`; }).join('');
+  tl.innerHTML=`<button class="tl-btn" id="goPrev">◀</button><button class="tl-btn" id="playAll">▶</button><button class="tl-btn" id="goNext">▶▶</button><div class="pins">${pins}</div>`;
+  tl.querySelectorAll('.goal-pin').forEach(b=>b.onclick=()=>{ _goalIdx=+b.dataset.i; pitch.stopReplay(); pitch.showGoal(_goalIdx); renderTimeline(); });
+  $('#goPrev').onclick=()=>{ const gs=pitch.goals(); _goalIdx=Math.max(0,_goalIdx-1); pitch.stopReplay(); pitch.showGoal(_goalIdx); renderTimeline(); };
+  $('#goNext').onclick=()=>{ const gs=pitch.goals(); _goalIdx=Math.min(gs.length-1,_goalIdx+1); pitch.stopReplay(); pitch.showGoal(_goalIdx); renderTimeline(); };
+  $('#playAll').onclick=()=>{ pitch.isReplaying()? pitch.stopReplay() : pitch.replayGoals(); };
+}
+function renderPitch(){
+  const m=CURRENT, card=$('#pitchCard');
+  if(!m || !m.home || !m.away){ card.style.display='none'; if(pitch){pitch.destroy();pitch=null;} return; }
+  card.style.display='';
+  if(!pitch){ pitch=makePitch(m); _pitchMatchId=m.id; _goalIdx=-1; }
+  else if(_pitchMatchId!==m.id){ pitch.destroy(); pitch=makePitch(m); _pitchMatchId=m.id; _goalIdx=-1; }
+  else pitch.update(m);
+  renderBadges(); renderTimeline();
+}
+// toggle chips
+document.getElementById('pitchToggles').addEventListener('click',e=>{ const b=e.target.closest('[data-opt]'); if(!b||!pitch) return; const on=!b.classList.contains('on'); b.classList.toggle('on',on); pitch.setOpt(b.dataset.opt,on); });
+function updatePoss(){ if(!pitch) return; const h=pitch.getPossession(), a=100-h; const f=$('#possFill'); if(f){ f.style.width=h+'%'; $('#possH').textContent=h+'%'; $('#possA').textContent=a+'%'; } }
+
+function renderAll(){ if(!CURRENT)return; renderScoreboard(); renderPitch(); renderEvents(); renderWinProb(); renderFacts(); renderStatus(); renderVenue(); renderLineups(); }
+
+const REQUESTED_ID = +(new URLSearchParams(location.search).get('match')) || null;
+let _firstBoot=true;
 function boot(){
   const list=tickerList();
-  if(!CURRENT || !list.find(x=>x.id===CURRENT.id)) CURRENT = list.find(m=>m.status==='live') || list[0];
+  if(_firstBoot && REQUESTED_ID){
+    const wanted = MATCHES.find(m=>m.id===REQUESTED_ID && m.home && m.away);
+    if(wanted) CURRENT = wanted;
+  }
+  _firstBoot=false;
+  if(!CURRENT || !MATCHES.find(x=>x.id===CURRENT.id)) CURRENT = list.find(m=>m.status==='live') || list[0];
   if(CURRENT){ renderTicker(); renderAll(); }
 }
 
 LiveData.refresh(boot);
 setInterval(()=>LiveData.refresh(()=>{ renderTicker(); renderAll(); }), 20000);   // live score/status refresh
 setInterval(()=>{ if(CURRENT && LiveData.matchClock(CURRENT).state!=='finished'){ renderScoreboard(); renderWinProb(); renderStatus(); } }, 1000); // local clock tick
+setInterval(updatePoss, 600); // momentum/possession meter
 </script>
 </body>
 </html>

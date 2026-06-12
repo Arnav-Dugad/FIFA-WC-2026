@@ -1,7 +1,5 @@
 # 🏆 World Cup 2026 Hub
 
-https://arnav-dugad.github.io/FIFA-WC-2026/
-
 A premium, fully responsive, **multi-page fan website** for the FIFA World Cup 2026 (USA · Canada · Mexico). Pure HTML/CSS/JavaScript — no build step, no server, no API keys, **100% free**.
 
 ## ▶ How to open

@@ -33,11 +33,12 @@
       </div>
     </div>
     <div class="hero-card reveal">
-      <div class="trophy">🏆</div>
-      <h3 class="display">Countdown to Kick-Off</h3>
-      <p class="sub">Opening Match · Mexico vs Croatia · Estadio Azteca</p>
-      <div class="countdown" id="countdown"></div>
-      <a href="fixtures.html" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:20px">See Opening Fixtures →</a>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 class="display">⚽ Match Hub</h3>
+        <span class="pill pill-red" id="heroLivePill" style="display:none">● LIVE</span>
+      </div>
+      <div id="heroDynamic"><div class="muted" style="font-size:.85rem">Loading the latest…</div></div>
+      <a href="fixtures.html" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:16px">Full schedule &amp; results →</a>
     </div>
   </div>
 </section>
@@ -124,7 +125,36 @@
 <script src="js/live-data.js"></script>
 <script src="js/app.js"></script>
 <script>
-  startCountdown(TOURNAMENT.start, '#countdown');
+  function miniRow(m,kind){
+    const h=team(m.home), a=team(m.away);
+    const c=LiveData.matchClock(m);
+    const right = kind==='next' ? `<span style="color:var(--green);font-weight:700">${localTime(m.kickoff)}</span>`
+      : (m.hs!=null ? `<b style="font-family:Oswald;font-size:1.05rem">${m.hs}-${m.as}</b>`
+                    : `<span style="color:var(--red);font-weight:700">${c.label||'LIVE'}</span>`);
+    const row=el('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--card-border);cursor:pointer';
+    row.innerHTML=`<img src="${flag(h.cc)}" style="width:22px;height:15px;border-radius:3px">
+      <span style="font-weight:600;font-size:.86rem;flex:1">${h.code} <span class="muted">v</span> ${a.code}</span>
+      <img src="${flag(a.cc)}" style="width:22px;height:15px;border-radius:3px">
+      <span style="min-width:46px;text-align:right">${right}</span>`;
+    row.onclick=()=>{ if(c.state==='live') location.href='live.html?match='+m.id; else matchDetail(m); };
+    return row;
+  }
+  function renderHeroCard(live, finished, upcoming){
+    const box=$('#heroDynamic'); box.innerHTML='';
+    $('#heroLivePill').style.display = live.length ? '' : 'none';
+    if(live.length){
+      box.appendChild(el('div','',`<div style="font-size:.7rem;font-weight:800;letter-spacing:1.2px;color:var(--red);text-transform:uppercase;margin:2px 0 2px">🔴 Live now</div>`));
+      live.slice(0,2).forEach(m=>box.appendChild(miniRow(m,'live')));
+    }
+    box.appendChild(el('div','',`<div style="font-size:.7rem;font-weight:800;letter-spacing:1.2px;color:var(--gold);text-transform:uppercase;margin:12px 0 2px">Latest results</div>`));
+    if(finished.length) finished.slice(0,3).forEach(m=>box.appendChild(miniRow(m,'result')));
+    else box.appendChild(el('div','muted',`<span style="font-size:.82rem">No results yet — the tournament is just starting.</span>`));
+    if(upcoming.length){
+      box.appendChild(el('div','',`<div style="font-size:.7rem;font-weight:800;letter-spacing:1.2px;color:var(--green);text-transform:uppercase;margin:12px 0 2px">Next match · ${relativeKO(upcoming[0].kickoff)}</div>`));
+      box.appendChild(miniRow(upcoming[0],'next'));
+    }
+  }
 
   function isSameLocalDay(iso, ref){ const d=new Date(iso); return d.getFullYear()===ref.getFullYear()&&d.getMonth()===ref.getMonth()&&d.getDate()===ref.getDate(); }
 
@@ -134,6 +164,10 @@
     const live = withTeams.filter(m=>m.status==='live').sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
     const upcoming = withTeams.filter(m=>m.status==='upcoming').sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
     const finished = withTeams.filter(m=>m.status==='finished').sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+    const finishedScored = finished.filter(m=>m.hs!=null);
+
+    /* HERO CARD — last results + next match (replaces the countdown) */
+    renderHeroCard(live, finishedScored, upcoming);
 
     /* SPOTLIGHT — always show a live match (or latest result) + the next match */
     const sp=$('#spotlight'); sp.innerHTML='';
