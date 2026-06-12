@@ -214,7 +214,7 @@ function matchCard(m){
     </div>
     <div class="match-foot">
       <span>📍 ${st.name}, ${st.city}</span>
-      ${isLive?`<a href="live.html">Watch live →</a>`:`<span>Details →</span>`}
+      ${isLive?`<a href="live.html?match=${m.id}">Watch live →</a>`:`<span>Details →</span>`}
     </div>`;
   c.style.cursor='pointer';
   c.addEventListener('click', e=>{ if(e.target.closest('a')) return; matchDetail(m); });
@@ -353,6 +353,13 @@ function matchDetail(m){
     if(!list.length) return `<div class="muted" style="font-size:.8rem;text-align:${side}">Line-up confirmed near kick-off</div>`;
     return list.map(p=>`<div class="lineup-row" style="${side==='right'?'flex-direction:row-reverse;text-align:right':''}"><span class="ln">${p.num}</span><b style="font-size:.85rem">${p.name}</b><span class="pos-badge pos-${p.pos}" style="margin-left:${side==='right'?'0':'auto'};margin-right:${side==='right'?'auto':'0'}">${p.pos}</span></div>`).join('');
   };
+  let goalsHtml='';
+  if(m.scorers && ((m.scorers.home||[]).length||(m.scorers.away||[]).length)){
+    const all=[...(m.scorers.home||[]).map(g=>({...g,side:'home'})),...(m.scorers.away||[]).map(g=>({...g,side:'away'}))].sort((x,y)=>parseInt(x.minute)-parseInt(y.minute));
+    goalsHtml=`<h3 class="display" style="font-size:1rem;margin:18px 0 8px">⚽ Goals</h3>`+
+      all.map(g=>`<div class="lineup-row" style="${g.side==='away'?'flex-direction:row-reverse;text-align:right':''}"><span class="ln" style="color:var(--gold)">${g.minute}'</span><b style="font-size:.85rem">${g.name}</b><span style="margin-${g.side==='away'?'right':'left'}:auto;font-size:.72rem;color:var(--muted)">${(g.side==='home'?h:a).code}</span></div>`).join('')+
+      (m.ht?`<div class="muted" style="font-size:.72rem;text-align:center;margin-top:6px">Half-time ${m.ht[0]}–${m.ht[1]}</div>`:'');
+  }
   let predHtml='';
   if(known){ const w=predictMatch(m);
     predHtml=`<h3 class="display" style="font-size:1rem;margin:18px 0 8px">🔮 Win probability <span class="muted" style="font-weight:400;font-size:.7rem">(ranking model)</span></h3>
@@ -373,15 +380,33 @@ function matchDetail(m){
       </div>
       <h2 style="margin:10px 0 2px;font-size:1.3rem">${h.name} <span class="muted">vs</span> ${a.name}</h2>
       <p class="sub">📍 ${st.name}, ${st.city} · ${localDateFull(m.kickoff)} · ${localTime(m.kickoff)} ${tzAbbr}</p>
+      ${known?`<div class="form-badges" id="mdForm" style="margin:14px 0 6px"></div>
+        <div class="pitch-wrap compact"><canvas id="mdPitch"></canvas></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0">
+          <span class="pitch-caption" style="margin:0">Illustrative animation — formations &amp; goals are real.</span>
+          <button class="btn btn-gold pitch-replay" id="mdReplay" style="display:none;padding:7px 12px">▶ Replay goals</button>
+        </div>`:''}
+      ${goalsHtml}
       ${predHtml}
       ${known?`<h3 class="display" style="font-size:1rem;margin:18px 0 8px">👕 Players to watch</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div>${lineupCol(m.home,'left')}</div><div>${lineupCol(m.away,'right')}</div></div>`:''}
       <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
         <button class="btn btn-gold" onclick='downloadICS(${JSON.stringify({id:m.id,home:m.home,away:m.away,homeLabel:m.homeLabel,awayLabel:m.awayLabel,stadium:m.stadium,kickoff:m.kickoff,stage:m.stage})})'>📅 Add to calendar</button>
         <a href="stadiums.html" class="btn btn-ghost">🗺️ Stadium &amp; map</a>
-        <a href="live.html" class="btn btn-primary">🔴 Live center</a>
+        <a href="live.html?match=${m.id}" class="btn btn-primary">🔴 Live center</a>
       </div>
     </div>`);
+  if(known){
+    ensurePitch().then(()=>{
+      const cv=$('#mdPitch'); if(!cv || !window.createPitch) return;
+      const rb=$('#mdReplay');
+      const setLbl=(active)=>{ if(rb) rb.textContent = active?'⏭ Skip':'▶ Replay goals'; };
+      _modalPitch=createPitch(cv, m, {compact:true, autoReplay:true, onReplayState:setLbl});
+      const fb=$('#mdForm'); if(fb){ const f=_modalPitch.formations();
+        fb.innerHTML=`<span class="fbadge"><img src="${flag(h.cc)}">${h.code} <b>${f.home}</b></span><span class="fbadge"><img src="${flag(a.cc)}">${a.code} <b>${f.away}</b></span>`; }
+      if(rb && _modalPitch.hasGoals()){ rb.style.display=''; rb.onclick=()=>{ _modalPitch.isReplaying()?_modalPitch.stopReplay():_modalPitch.replayGoals(); }; }
+    });
+  }
 }
 
 /* ----------  KICK-OFF NOTIFICATIONS for followed teams  ---------- */
@@ -505,12 +530,21 @@ function initReveal(){
 }
 
 /* ----------  generic modal  ---------- */
+let _modalPitch=null;
+function closeModal(){ const ov=$('#modalOverlay'); if(ov) ov.classList.remove('open'); if(_modalPitch){ _modalPitch.destroy(); _modalPitch=null; } }
 function showModal(html){
+  if(_modalPitch){ _modalPitch.destroy(); _modalPitch=null; }
   let ov=$('#modalOverlay');
   if(!ov){ ov=el('div','modal-overlay'); ov.id='modalOverlay'; document.body.appendChild(ov);
-    ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('open'); }); }
-  ov.innerHTML = `<div class="modal"><button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">×</button>${html}</div>`;
+    ov.addEventListener('click',e=>{ if(e.target===ov) closeModal(); }); }
+  ov.innerHTML = `<div class="modal"><button class="modal-close" onclick="closeModal()">×</button>${html}</div>`;
   ov.classList.add('open');
+}
+
+/* lazy-load the pitch module on demand (so non-live pages don't ship it eagerly) */
+function ensurePitch(){
+  if(window.createPitch) return Promise.resolve();
+  return new Promise((res)=>{ const s=document.createElement('script'); s.src='js/pitch.js'; s.onload=()=>res(); s.onerror=()=>res(); document.head.appendChild(s); });
 }
 
 /* ----------  PWA: manifest, theme color, service worker  ---------- */

@@ -10,15 +10,19 @@
    The UI never invents a scoreline: no data → shows real status only.
    ===================================================================== */
 const LiveData = (() => {
-  const FT_MIN = 105, FINISH_AFTER = 140;
+  const STALE = 360;   // minutes after KO with no result before we stop calling a match "in play"
   const OF_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 
-  /* ---------- real match clock ---------- */
+  /* ---------- real match clock (feed-aware) ----------
+     A match is only "finished" when the feed has a confirmed final result
+     (m._final) — or 6h after KO if no data ever arrives. Otherwise, once KO
+     passes it is "in play" (score fills from the feed). No bare "FT –". */
   function matchClock(m){
     const ko = new Date(m.kickoff).getTime(), now = Date.now();
     const elapsed = Math.floor((now - ko)/60000);
     if (elapsed < 0)  return { state:'upcoming', minute:0, label:'' };
-    if (elapsed >= FINISH_AFTER || (m.hs!=null && elapsed>=FT_MIN)) return { state:'finished', minute:90, label:'FT' };
+    if (m._final)     return { state:'finished', minute:90, label:'FT' };
+    if (elapsed >= STALE) return { state:'finished', minute:90, label:'FT' };
     let minute,label;
     if (elapsed<=45){ minute=Math.max(1,elapsed); label=minute+"'"; }
     else if (elapsed<=60){ minute=45; label='HT'; }
@@ -32,7 +36,6 @@ const LiveData = (() => {
       if(!m.home || !m.away){ if(m.status!=='finished') m.status='upcoming'; return; }
       const c = matchClock(m);
       m.minute=c.minute; m.clockLabel=c.label;
-      if(m.status==='finished' && m.hs!=null) return;
       m.status = c.state;
     });
   }
@@ -79,20 +82,25 @@ const LiveData = (() => {
       (json.matches||[]).forEach(ev=>{
         const c1=toCode(ev.team1), c2=toCode(ev.team2);
         const ft = ev.score && ev.score.ft;
+        const applyGoals=(m)=>{
+          if(ev.score && ev.score.ht) m.ht=ev.score.ht;
+          if(ev.goals1 || ev.goals2) m.scorers={ home:ev.goals1||[], away:ev.goals2||[] };
+        };
         // KNOCKOUT — align by match number to our skeleton (ids 73-104)
         if(ev.num && ev.num>=73){
           const m=MATCHES.find(x=>x.id===ev.num);
           if(m){
             if(c1){ m.home=c1; m._feed=true; }
             if(c2){ m.away=c2; m._feed=true; }
-            if(ft){ m.hs=ft[0]; m.as=ft[1]; m.status='finished'; changed=true; }
+            if(ft){ m.hs=ft[0]; m.as=ft[1]; m._final=true; m.status='finished'; changed=true; }
+            applyGoals(m);
           }
           return;
         }
         // GROUP — align by team codes
         if(c1&&c2){
           const m=MATCHES.find(x=>x.home===c1 && x.away===c2);
-          if(m && ft){ m.hs=ft[0]; m.as=ft[1]; m.status='finished'; changed=true; }
+          if(m){ if(ft){ m.hs=ft[0]; m.as=ft[1]; m._final=true; m.status='finished'; changed=true; } applyGoals(m); }
         }
       });
     }catch(e){ /* offline/blocked — fall back to clock status */ }
@@ -113,8 +121,8 @@ const LiveData = (() => {
           const m=MATCHES.find(x=>x.home===h&&x.away===a); if(!m) return;
           if(e.intHomeScore!=null&&e.intHomeScore!==''){ m.hs=+e.intHomeScore; m.as=+e.intAwayScore; changed=true; }
           const st=(e.strStatus||'').toLowerCase();
-          if(/ft|finished/.test(st)) m.status='finished';
-          else if(/1h|2h|ht|live|in play/.test(st)) m.status='live';
+          if(/ft|finished|aet|after extra|pen/.test(st)){ m._final=true; m.status='finished'; }
+          else if(/1h|2h|ht|live|in play|playing/.test(st)) m.status='live';
         });
       }catch(e){}
     }
@@ -128,8 +136,8 @@ const LiveData = (() => {
     resolve();
     if(typeof onUpdate==='function') onUpdate();
     const jobs=[];
-    // openfootball at most every 3 min
-    if(Date.now()-lastOF>18e4){ lastOF=Date.now(); jobs.push(fetchOpenFootball()); }
+    // openfootball (results + goalscorers) — refresh up to once a minute
+    if(Date.now()-lastOF>55e3){ lastOF=Date.now(); jobs.push(fetchOpenFootball()); }
     jobs.push(fetchLiveScores());
     Promise.allSettled(jobs).then(()=>{ resolve(); if(typeof onUpdate==='function') onUpdate(); });
   }
