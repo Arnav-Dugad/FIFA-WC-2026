@@ -63,6 +63,8 @@
     return true;
   }
 
+  let _jumped=false;
+  const todayKey = new Date().toLocaleDateString([], {weekday:'long',month:'long',day:'numeric'});
   function render(){
     const list = $('#fixtureList'); list.innerHTML='';
     const matches = MATCHES.filter(passes).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
@@ -70,15 +72,22 @@
     // group by local day
     const byDay = {};
     matches.forEach(m=>{ const k=localDate(m.kickoff,{weekday:'long',month:'long',day:'numeric'}); (byDay[k] ||= []).push(m); });
+    let todayHead=null, nextHead=null;
     Object.entries(byDay).forEach(([day,ms])=>{
       const head = el('div','section-head');
       head.style.cssText='margin:30px 0 16px';
-      head.innerHTML = `<h2 class="display" style="font-size:1.3rem">📅 ${day}</h2><span class="muted" style="font-size:.85rem">${ms.length} match${ms.length>1?'es':''}</span>`;
+      const isToday = day===todayKey;
+      head.innerHTML = `<h2 class="display" style="font-size:1.3rem">📅 ${day}${isToday?' <span class="pill pill-green" style="vertical-align:middle">TODAY</span>':''}</h2><span class="muted" style="font-size:.85rem">${ms.length} match${ms.length>1?'es':''}</span>`;
       list.appendChild(head);
+      if(isToday) todayHead=head;
+      if(!nextHead && new Date(ms[0].kickoff)>=Date.now()-6*36e5) nextHead=head;
       const grid = el('div','grid'); grid.style.gridTemplateColumns='repeat(auto-fill,minmax(330px,1fr))';
       ms.forEach(m=>grid.appendChild(matchCard(m)));
       list.appendChild(grid);
     });
+    // on first load, jump to today's matches (or the nearest upcoming day)
+    if(!_jumped){ _jumped=true; const target=todayHead||nextHead;
+      if(target) setTimeout(()=>{ const y=target.getBoundingClientRect().top+window.pageYOffset-80; window.scrollTo({top:y,behavior:'smooth'}); },200); }
   }
 
   $$('#groupChips .chip').forEach(c=>c.onclick=()=>{ $$('#groupChips .chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); fGroup=c.dataset.g; render(); });

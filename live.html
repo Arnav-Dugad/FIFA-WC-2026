@@ -52,27 +52,6 @@
       <div class="live-main">
         <div class="live-scoreboard reveal" id="scoreboard"></div>
 
-        <div class="card reveal" id="pitchCard" style="padding:20px;display:none">
-          <div class="pitch-head">
-            <h3 class="display">🟢 Tactical Pitch</h3>
-            <div class="form-badges" id="formBadges"></div>
-          </div>
-          <div class="poss-meter">
-            <div class="poss-row"><b id="possH" style="color:var(--green)">50%</b><span class="muted">Momentum / possession (model)</span><b id="possA" style="color:var(--gold)">50%</b></div>
-            <div class="poss-bar"><span id="possFill"></span></div>
-          </div>
-          <div class="pitch-wrap"><canvas id="pitchCanvas"></canvas></div>
-          <div class="pitch-controls">
-            <div class="pitch-toggles" id="pitchToggles">
-              <button class="chip mini on" data-opt="heat">🔥 Heat</button>
-              <button class="chip mini on" data-opt="markers">⚽ Goals</button>
-              <button class="chip mini on" data-opt="names">🅰 Names</button>
-            </div>
-            <div class="goal-timeline" id="goalTimeline"></div>
-          </div>
-          <p class="pitch-caption">Tactical view — player movement &amp; passing are an illustrative animation, not live tracking. Formations, goals, scorers &amp; minutes are real (feed).</p>
-        </div>
-
         <div class="card reveal" id="eventsCard" style="padding:24px;display:none">
           <h3 class="display" style="margin-bottom:14px">⚽ Goal Timeline</h3>
           <div id="events"></div>
@@ -82,7 +61,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
             <h3 class="display">🔮 Win Probability</h3><span class="muted" style="font-size:.72rem" id="wpMode"></span>
           </div>
-          <p class="muted" style="font-size:.8rem;margin-bottom:16px">Model blending FIFA rankings with the live score &amp; time remaining. For fun — not betting advice.</p>
+          <p class="muted" style="font-size:.8rem;margin-bottom:16px">Based on world rankings, the live score and time remaining.</p>
           <div id="winProb"></div>
         </div>
 
@@ -100,7 +79,8 @@
           <div id="statusPanel" style="padding:16px 18px"></div>
         </div>
         <div class="card reveal" id="venueCard" style="padding:18px;margin-bottom:20px"></div>
-        <div class="card reveal" id="lineups" style="padding:18px"></div>
+        <div class="card reveal" id="lineups" style="padding:18px;margin-bottom:20px"></div>
+        <div class="card reveal" id="matchNewsCard" style="padding:18px"><h3 class="display" style="margin-bottom:10px">📰 Match News</h3><div id="matchNews"><span class="muted" style="font-size:.84rem">Searching headlines…</span></div></div>
       </div>
     </div>
   </div>
@@ -108,10 +88,9 @@
 
 <script src="js/data.js"></script>
 <script src="js/live-data.js"></script>
-<script src="js/pitch.js"></script>
 <script src="js/app.js"></script>
 <script>
-let CURRENT=null, pitch=null;
+let CURRENT=null;
 
 function tickerList(){
   const now=Date.now();
@@ -154,6 +133,7 @@ function renderScoreboard(){
       <div class="lsb-score">${centre}<small>${sub}</small></div>
       <div class="lsb-team"><img src="${flag(a.cc)}" alt="${a.name}"><h3 class="display">${a.name}</h3><div class="rank">FIFA #${a.rank}${a.titles?` · ★${a.titles}`:''}</div></div>
     </div>`;
+  const sb=$('#scoreboard'); sb.style.background=`linear-gradient(100deg, ${hexA(h.c1,.5)} 0%, rgba(9,11,20,.93) 42%, rgba(9,11,20,.93) 58%, ${hexA(a.c2,.5)} 100%)`;
 }
 
 function renderWinProb(){
@@ -248,40 +228,22 @@ function renderEvents(){
     </div>`;
   }).join('') + (m.ht?`<div class="muted" style="font-size:.74rem;text-align:center;margin-top:8px">Half-time: ${m.ht[0]}–${m.ht[1]}</div>`:'');
 }
-let _pitchMatchId=null, _goalIdx=-1;
-function makePitch(m){ return createPitch($('#pitchCanvas'), m, {compact:false, autoReplay:true, onReplayState:onReplayState}); }
-function onReplayState(active){ const pb=document.getElementById('playAll'); if(pb) pb.innerHTML = active? '⏸' : '▶'; }
 
-function renderBadges(){
-  const f=pitch.formations(), h=team(CURRENT.home), a=team(CURRENT.away);
-  const tag=(t,fm,src)=>`<span class="fbadge"><img src="${flag(t.cc)}">${t.code} <b>${fm}</b><i>${src==='feed'?'lineup':'proj'}</i></span>`;
-  $('#formBadges').innerHTML = tag(h,f.home,f.homeSrc)+tag(a,f.away,f.awaySrc);
+let _newsForId=null;
+function renderMatchNews(){
+  const m=CURRENT; if(!m||!m.home||!m.away) return;
+  if(_newsForId===m.id) return; _newsForId=m.id;
+  const box=$('#matchNews'); box.innerHTML='<span class="muted" style="font-size:.84rem">Searching headlines…</span>';
+  const h=team(m.home), a=team(m.away);
+  ensureNews().then(()=>{ if(!window.NewsFeed){ box.innerHTML='<span class="muted" style="font-size:.84rem">News unavailable.</span>'; return; }
+    NewsFeed.forMatch(h.name,a.name).then(items=>{
+      if(_newsForId!==m.id) return;
+      if(!items||!items.length){ box.innerHTML='<span class="muted" style="font-size:.84rem">No related headlines yet.</span>'; return; }
+      box.innerHTML=items.slice(0,5).map(n=>`<a class="md-news" href="${n.link}" target="_blank" rel="noopener"><span class="md-news-t">${n.title}</span><span class="md-news-m">${n.src||''}${n.date?(' · '+localDate(n.date,{month:'short',day:'numeric'})):''} ↗</span></a>`).join('');
+    });
+  });
 }
-function renderTimeline(){
-  const tl=$('#goalTimeline'); const gs=pitch.goals();
-  if(!gs.length){ tl.innerHTML='<span class="muted" style="font-size:.76rem">No goals to replay</span>'; return; }
-  const pins=gs.map((g,i)=>{ const t=team(g.side==='home'?CURRENT.home:CURRENT.away);
-    return `<button class="goal-pin ${i===_goalIdx?'on':''}" data-i="${i}" title="${g.name}"><span class="gm">${g.minute}'</span><img src="${flag(t.cc)}"></button>`; }).join('');
-  tl.innerHTML=`<button class="tl-btn" id="goPrev">◀</button><button class="tl-btn" id="playAll">▶</button><button class="tl-btn" id="goNext">▶▶</button><div class="pins">${pins}</div>`;
-  tl.querySelectorAll('.goal-pin').forEach(b=>b.onclick=()=>{ _goalIdx=+b.dataset.i; pitch.stopReplay(); pitch.showGoal(_goalIdx); renderTimeline(); });
-  $('#goPrev').onclick=()=>{ const gs=pitch.goals(); _goalIdx=Math.max(0,_goalIdx-1); pitch.stopReplay(); pitch.showGoal(_goalIdx); renderTimeline(); };
-  $('#goNext').onclick=()=>{ const gs=pitch.goals(); _goalIdx=Math.min(gs.length-1,_goalIdx+1); pitch.stopReplay(); pitch.showGoal(_goalIdx); renderTimeline(); };
-  $('#playAll').onclick=()=>{ pitch.isReplaying()? pitch.stopReplay() : pitch.replayGoals(); };
-}
-function renderPitch(){
-  const m=CURRENT, card=$('#pitchCard');
-  if(!m || !m.home || !m.away){ card.style.display='none'; if(pitch){pitch.destroy();pitch=null;} return; }
-  card.style.display='';
-  if(!pitch){ pitch=makePitch(m); _pitchMatchId=m.id; _goalIdx=-1; }
-  else if(_pitchMatchId!==m.id){ pitch.destroy(); pitch=makePitch(m); _pitchMatchId=m.id; _goalIdx=-1; }
-  else pitch.update(m);
-  renderBadges(); renderTimeline();
-}
-// toggle chips
-document.getElementById('pitchToggles').addEventListener('click',e=>{ const b=e.target.closest('[data-opt]'); if(!b||!pitch) return; const on=!b.classList.contains('on'); b.classList.toggle('on',on); pitch.setOpt(b.dataset.opt,on); });
-function updatePoss(){ if(!pitch) return; const h=pitch.getPossession(), a=100-h; const f=$('#possFill'); if(f){ f.style.width=h+'%'; $('#possH').textContent=h+'%'; $('#possA').textContent=a+'%'; } }
-
-function renderAll(){ if(!CURRENT)return; renderScoreboard(); renderPitch(); renderEvents(); renderWinProb(); renderFacts(); renderStatus(); renderVenue(); renderLineups(); }
+function renderAll(){ if(!CURRENT)return; renderScoreboard(); renderEvents(); renderWinProb(); renderFacts(); renderStatus(); renderVenue(); renderLineups(); renderMatchNews(); }
 
 const REQUESTED_ID = +(new URLSearchParams(location.search).get('match')) || null;
 let _firstBoot=true;
@@ -299,7 +261,6 @@ function boot(){
 LiveData.refresh(boot);
 setInterval(()=>LiveData.refresh(()=>{ renderTicker(); renderAll(); }), 20000);   // live score/status refresh
 setInterval(()=>{ if(CURRENT && LiveData.matchClock(CURRENT).state!=='finished'){ renderScoreboard(); renderWinProb(); renderStatus(); } }, 1000); // local clock tick
-setInterval(updatePoss, 600); // momentum/possession meter
 </script>
 </body>
 </html>

@@ -24,22 +24,34 @@
   <div class="wrap">
     <div class="filterbar reveal">
       <input class="search-input" id="search" placeholder="🔍 Search players, clubs, nations…">
-      <span style="width:1px;height:26px;background:var(--card-border)"></span>
+      <select class="search-input" id="confSel" style="max-width:200px">
+        <option value="all">All confederations</option>
+        <option value="UEFA">UEFA (Europe)</option>
+        <option value="CONMEBOL">CONMEBOL (S. America)</option>
+        <option value="CONCACAF">CONCACAF (N. America)</option>
+        <option value="CAF">CAF (Africa)</option>
+        <option value="AFC">AFC (Asia)</option>
+        <option value="OFC">OFC (Oceania)</option>
+      </select>
+    </div>
+    <div class="filterbar reveal" style="margin-top:-8px">
       <button class="chip active" data-p="all">All</button>
       <button class="chip" data-p="hot">🔥 Headliners</button>
       <button class="chip" data-p="FW">Forwards</button>
       <button class="chip" data-p="MF">Midfield</button>
       <button class="chip" data-p="DF">Defenders</button>
       <button class="chip" data-p="GK">Keepers</button>
+      <span style="flex:1"></span>
+      <span class="muted" id="pcount" style="font-size:.85rem;font-weight:600"></span>
     </div>
-    <div class="grid players-grid reveal" id="playerGrid"></div>
+    <div class="grid players-grid reveal in" id="playerGrid"></div>
   </div>
 </section>
 
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 <script>
-  let fp='all', fs='';
+  let fp='all', fs='', fc='all';
   function card(p){
     const t=team(p.team);
     const c=el('div','card player-card');
@@ -93,13 +105,16 @@
     let list=[...PLAYERS];
     if(fp==='hot') list=list.filter(p=>p.hot);
     else if(fp!=='all') list=list.filter(p=>p.pos===fp);
+    if(fc!=='all') list=list.filter(p=>team(p.team).conf===fc);
     if(fs) list=list.filter(p=>{const t=team(p.team);return `${p.name} ${p.club} ${t.name}`.toLowerCase().includes(fs);});
     list.sort((a,b)=>b.rating-a.rating);
-    if(!list.length){g.innerHTML='<div class="empty" style="grid-column:1/-1">No players found.</div>';return;}
+    $('#pcount').textContent = list.length+' player'+(list.length===1?'':'s');
+    if(!list.length){g.innerHTML='<div class="empty" style="grid-column:1/-1">No players match your filters.</div>';return;}
     list.forEach(p=>g.appendChild(card(p)));
   }
   $$('.chip[data-p]').forEach(c=>c.onclick=()=>{$$('.chip[data-p]').forEach(x=>x.classList.remove('active'));c.classList.add('active');fp=c.dataset.p;render();});
   $('#search').oninput=e=>{fs=e.target.value.trim().toLowerCase();render();};
+  $('#confSel').onchange=e=>{fc=e.target.value;render();};
   render();
 </script>
 </body>

@@ -54,6 +54,28 @@
   </div>
 </section>
 
+<!-- LIVE NEWS (directly below Live & Up Next) -->
+<section class="section-tight">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div><div class="eyebrow">From the press box <span id="homeNewsState" class="muted"></span></div><h2 class="display">Latest <span class="display">News</span></h2></div>
+      <a href="news.html" class="link-more">All news →</a>
+    </div>
+    <div class="grid news-grid reveal" id="homeNews"></div>
+  </div>
+</section>
+
+<!-- PREDICTOR PROMO -->
+<section class="section-tight">
+  <div class="wrap reveal">
+    <a href="predictor.html" class="home-promo">
+      <span class="pi">🎯</span>
+      <div style="flex:1"><b class="display">Play the Predictor Game</b><div class="muted">Predict scores, earn points &amp; coins at live odds, build streaks, unlock badges and climb the leaderboard — free.</div></div>
+      <span class="btn btn-gold">Play now →</span>
+    </a>
+  </div>
+</section>
+
 <!-- TODAY'S MATCHES WIDGET -->
 <section class="section-tight" id="todaySec" style="display:none">
   <div class="wrap">
@@ -100,29 +122,19 @@
   </div>
 </section>
 
-<!-- LATEST NEWS -->
-<section class="section-tight">
-  <div class="wrap">
-    <div class="section-head reveal">
-      <div><div class="eyebrow">From the press box</div><h2 class="display">Latest <span class="display">News</span></h2></div>
-      <a href="news.html" class="link-more">All news →</a>
-    </div>
-    <div class="grid news-grid reveal" id="homeNews"></div>
-  </div>
-</section>
-
 <!-- QUICK LINKS -->
 <section class="section-tight">
   <div class="wrap grid reveal" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
     <a href="stadiums.html" class="card" style="padding:24px"><div style="font-size:1.6rem">🏟️</div><h3 class="display" style="margin-top:8px">Stadiums &amp; Maps</h3><p class="muted" style="font-size:.88rem">Explore all 16 venues with interactive maps.</p></a>
     <a href="players.html" class="card" style="padding:24px"><div style="font-size:1.6rem">⭐</div><h3 class="display" style="margin-top:8px">Star Players</h3><p class="muted" style="font-size:.88rem">The icons and wonderkids to watch this summer.</p></a>
     <a href="stats.html" class="card" style="padding:24px"><div style="font-size:1.6rem">📊</div><h3 class="display" style="margin-top:8px">Stats &amp; Standings</h3><p class="muted" style="font-size:.88rem">Live group tables, top scorers and leaderboards.</p></a>
-    <a href="live.html" class="card" style="padding:24px"><div style="font-size:1.6rem">🔴</div><h3 class="display" style="margin-top:8px">Live Center</h3><p class="muted" style="font-size:.88rem">Real-time scores, momentum and commentary.</p></a>
+    <a href="live.html" class="card" style="padding:24px"><div style="font-size:1.6rem">🔴</div><h3 class="display" style="margin-top:8px">Live Center</h3><p class="muted" style="font-size:.88rem">Live scores, win probability, venue weather and line-ups.</p></a>
   </div>
 </section>
 
 <script src="js/data.js"></script>
 <script src="js/live-data.js"></script>
+<script src="js/news.js"></script>
 <script src="js/app.js"></script>
 <script>
   function miniRow(m,kind){
@@ -207,23 +219,35 @@
     tt.appendChild(c);
   });
 
-  // News
-  const hn = $('#homeNews');
-  NEWS.slice(0,5).forEach((n,i)=>{
-    const c = el('div','card news-card'+(i===0?' news-feature':''));
-    const venue = stadium(n.img);
-    c.innerHTML = `<div class="news-img"><span class="cat">${n.cat}</span>
-        <img src="${cityImg(n.img, venue.city||n.img)}" alt=""></div>
-      <div class="news-body"><div class="date">${localDate(n.date,{month:'long',day:'numeric'})} · ${localTime(n.date)}</div>
+  // News — live feed, with curated fallback
+  function homeNewsFallback(){
+    const hn=$('#homeNews'); hn.innerHTML='';
+    NEWS.slice(0,5).forEach((n,i)=>{
+      const c=el('div','card news-card'+(i===0?' news-feature':'')); const venue=stadium(n.img);
+      c.innerHTML=`<div class="news-img"><span class="cat">${n.cat}</span><img src="${cityImg(n.img, venue.city||n.img)}" alt=""></div>
+        <div class="news-body"><div class="date">${localDate(n.date,{month:'long',day:'numeric'})} · ${localTime(n.date)}</div>
         <h3>${n.title}</h3><p class="blurb">${n.blurb}</p></div>`;
-    loadVenuePhoto(c.querySelector('.news-img img'), venue.wiki);
-    c.onclick = ()=> showModal(`<div class="modal-hero" style="background:var(--grad-hero)"><span style="font-size:2.4rem">📰</span></div>
-      <div class="modal-body"><span class="pill pill-gold">${n.cat}</span>
-      <h2 style="margin:12px 0 4px">${n.title}</h2><p class="sub">${localDateFull(n.date)} · ${localTime(n.date)} ${tzAbbr}</p>
-      <p style="color:var(--muted)">${n.blurb}</p><p style="color:var(--muted);margin-top:12px">Full coverage, team-by-team reaction and tactical analysis continues across our News desk as the tournament unfolds.</p>
-      <a href="news.html" class="btn btn-primary" style="margin-top:18px">More stories →</a></div>`);
-    hn.appendChild(c);
-  });
+      loadVenuePhoto(c.querySelector('.news-img img'), venue.wiki);
+      hn.appendChild(c);
+    });
+  }
+  function timeAgo(d){ const s=(Date.now()-new Date(d))/1000; if(isNaN(s))return''; if(s<3600)return Math.max(1,s/60|0)+'m ago'; if(s<86400)return (s/3600|0)+'h ago'; return (s/86400|0)+'d ago'; }
+  NewsFeed.load().then(items=>{
+    const hn=$('#homeNews');
+    if(!items || !items.length){ $('#homeNewsState').textContent=''; homeNewsFallback(); return; }
+    $('#homeNewsState').innerHTML='· <span style="color:var(--green)">●</span> live';
+    hn.innerHTML='';
+    items.slice(0,5).forEach((n,i)=>{
+      const c=el('div','card news-card'+(i===0?' news-feature':''));
+      const imgSrc=n.img||cityImg(n.title,'World Cup 2026');
+      c.innerHTML=`<div class="news-img"><span class="cat">${n.src||'News'}</span><img src="${imgSrc}" alt="" referrerpolicy="no-referrer"></div>
+        <div class="news-body"><div class="date">${n.date?localDate(n.date,{month:'short',day:'numeric'}):''} <span class="muted">· ${timeAgo(n.date)}</span></div>
+        <h3>${n.title}</h3><p class="blurb">${n.blurb||''}</p><span class="link-more">Read full story ↗</span></div>`;
+      const im=c.querySelector('.news-img img'); im.onerror=()=>{ im.onerror=null; im.src=cityImg(n.title,'World Cup 2026'); };
+      c.onclick=()=>window.open(n.link,'_blank','noopener');
+      hn.appendChild(c);
+    });
+  }).catch(homeNewsFallback);
 </script>
 </body>
 </html>

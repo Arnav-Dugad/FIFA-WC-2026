@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predictor Game — World Cup 2026</title>
+<meta name="description" content="Predict World Cup 2026 scores, earn points & coins at live odds, build streaks, unlock badges and climb the leaderboard. Free to play.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+<style>
+  .pred-hero{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;background:linear-gradient(135deg,rgba(0,196,106,.16),rgba(155,108,255,.14));border:1px solid var(--card-border);border-radius:22px;padding:24px;margin-bottom:8px}
+  .lvl-badge{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:var(--grad-hero);box-shadow:var(--shadow-glow);text-align:center}
+  .lvl-badge b{font-family:Oswald;font-size:2.2rem;color:#fff;line-height:1;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+  .lvl-badge span{font-size:.6rem;color:#fff;font-weight:800;letter-spacing:1px;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .xp-bar{height:10px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:8px}
+  .xp-bar span{display:block;height:100%;background:var(--grad-gold);transition:width .6s}
+  .stat-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:18px 0}
+  .stat-tile{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:14px;text-align:center}
+  .stat-tile b{display:block;font-family:Oswald;font-size:1.8rem;line-height:1;color:var(--gold)}
+  .stat-tile span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:26px 0 20px}
+  .tab{padding:10px 18px;border-radius:11px;font-weight:700;font-size:.9rem;background:var(--card);border:1px solid var(--card-border);color:var(--muted);cursor:pointer}
+  .tab.active{background:var(--grad-hero);color:#fff;border-color:transparent}
+  .pred-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+  .pcard{background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:18px}
+  .pcard.saved{border-color:rgba(0,196,106,.45);box-shadow:0 0 22px -12px rgba(0,196,106,.7)}
+  .pc-top{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:10px}
+  .pc-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--card-border)}
+  .pc-flag{width:32px;height:21px;border-radius:4px;object-fit:cover;flex:0 0 auto}
+  .pc-tn{flex:1;font-size:.92rem;font-weight:700}
+  .stepper{display:flex;align-items:center;gap:6px}
+  .stepper button{width:32px;height:32px;border-radius:9px;border:1px solid var(--card-border);background:var(--surface-2);color:var(--text);font-size:1.2rem;cursor:pointer;line-height:1;transition:.15s}
+  .stepper button:hover{border-color:var(--green);color:var(--green)}
+  .stepper .sc{min-width:28px;text-align:center;font-family:Oswald;font-size:1.5rem;font-weight:700}
+  .pc-call{font-size:.86rem;margin:12px 0 8px}
+  .pc-call .odd{color:var(--gold);font-weight:800}
+  .pc-return{font-size:.8rem;color:var(--muted);margin:8px 0 12px}
+  .pc-saved{text-align:center;font-size:.78rem;color:var(--green);margin-top:9px}
+  .odds-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+  .odds-btn{padding:9px 4px;border-radius:10px;border:1px solid var(--card-border);background:var(--surface-2);color:var(--text);cursor:pointer;text-align:center;transition:.15s}
+  .odds-btn small{display:block;font-size:.64rem;color:var(--muted)}
+  .odds-btn b{font-family:Oswald;font-size:1.05rem}
+  .odds-btn.sel{background:var(--grad-hero);color:#fff;border-color:transparent}
+  .odds-btn.sel small{color:rgba(255,255,255,.85)}
+  .stake-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .stake-row input{flex:1;min-width:90px;padding:8px 12px;border-radius:9px;background:var(--surface-2);border:1px solid var(--card-border);color:var(--text)}
+  .stake-chip{padding:6px 11px;border-radius:8px;border:1px solid var(--card-border);background:var(--surface-2);color:var(--muted);cursor:pointer;font-size:.78rem}
+  .board{width:100%;border-collapse:collapse}
+  .board th{font-size:.66rem;text-transform:uppercase;color:var(--muted);padding:10px 8px;text-align:left}
+  .board td{padding:11px 8px;border-top:1px solid var(--card-border)}
+  .board tr.you{background:rgba(0,196,106,.1)}
+  .board .rk{font-family:Oswald;color:var(--gold);width:34px}
+  .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+  .badge{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:18px;text-align:center;opacity:.45;filter:grayscale(.8)}
+  .badge.earned{opacity:1;filter:none;border-color:rgba(255,210,76,.4)}
+  .badge .bi{font-size:2rem}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--grad-hero);color:#fff;padding:12px 22px;border-radius:12px;font-weight:800;box-shadow:var(--shadow);z-index:310;animation:popIn .3s;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+  .potd{margin:-18px -18px 14px;padding:8px 12px;border-radius:16px 16px 0 0;background:var(--grad-gold);color:#1a1200;font-weight:800;font-size:.74rem;text-align:center}
+  .potd-card{border-color:rgba(255,206,77,.5);box-shadow:0 0 28px -12px rgba(255,206,77,.85)}
+  .ob-overlay{position:fixed;inset:0;background:rgba(4,4,12,.86);backdrop-filter:blur(8px);z-index:400;display:grid;place-items:center;padding:20px}
+  .ob-card{max-width:430px;width:100%;background:var(--surface);border:1px solid var(--card-border);border-radius:22px;padding:30px;text-align:center;box-shadow:var(--shadow);animation:popIn .3s}
+  .ob-step{font-size:.74rem;color:var(--gold);font-weight:800;letter-spacing:1.5px;margin-bottom:10px}
+  .ob-card h2{font-size:1.5rem;margin-bottom:10px}
+  .ob-card p{color:var(--muted);margin-bottom:22px;line-height:1.6}
+  .ob-btns{display:flex;gap:10px;justify-content:center}
+  @media(max-width:580px){
+    .pred-hero{grid-template-columns:1fr;text-align:center;gap:14px}
+    .lvl-badge{margin:0 auto}
+    .tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+    .tab{flex:0 0 auto}
+    .pred-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body data-page="predictor.html">
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal"><a href="index.html">Home</a> / Predictor</div>
+    <h1 class="display reveal">Predictor <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Game</span></h1>
+    <p class="reveal">Predict every match, earn <b style="color:var(--gold)">points</b> &amp; <b style="color:var(--gold)">coins</b> at live odds, build streaks, unlock badges and climb the leaderboard. 100% free, just for bragging rights.</p>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="wrap">
+    <div class="pred-hero reveal">
+      <div class="lvl-badge"><div><b id="lvlNum">1</b><span id="lvlTitle">ROOKIE</span></div></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 class="display">Your Career</h3>
+          <div style="display:flex;align-items:center;gap:10px"><span class="muted" id="xpText" style="font-size:.8rem"></span>
+          <button class="btn btn-gold" id="shareBtn" style="padding:7px 12px;font-size:.8rem">📸 Share card</button></div></div>
+        <div class="xp-bar"><span id="xpFill" style="width:0%"></span></div>
+        <div class="stat-tiles">
+          <div class="stat-tile"><b id="sPoints">0</b><span>Points</span></div>
+          <div class="stat-tile"><b id="sCoins">10,000</b><span>🪙 Coins</span></div>
+          <div class="stat-tile"><b id="sAcc">0%</b><span>Accuracy</span></div>
+          <div class="stat-tile"><b id="sStreak">0</b><span>🔥 Streak</span></div>
+          <div class="stat-tile"><b id="sExact">0</b><span>🎯 Exact</span></div>
+          <div class="stat-tile"><b id="sRank">–</b><span>Rank</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs reveal">
+      <button class="tab active" data-tab="predict">⚽ Predict</button>
+      <button class="tab" data-tab="picks">📋 My Picks</button>
+      <button class="tab" data-tab="board">🏆 Leaderboard</button>
+      <button class="tab" data-tab="badges">🎖️ Badges</button>
+      <span style="flex:1"></span>
+      <button class="tab" id="resetBtn" title="Reset your game" style="color:var(--red)">↺ Reset</button>
+    </div>
+
+    <div id="tabPredict"></div>
+    <div id="tabPicks" style="display:none"></div>
+    <div id="tabBoard" style="display:none"></div>
+    <div id="tabBadges" style="display:none"></div>
+  </div>
+</section>
+
+<script src="js/data.js"></script>
+<script src="js/live-data.js"></script>
+<script src="js/predictor.js"></script>
+<script src="js/app.js"></script>
+<script>
+  const S=()=>Predictor.state;
+  const draft={}; // per-match working pick/score before lock
+  let POTD=null, _prevCoins=S().coins;
+  const reduced=()=>document.documentElement.classList.contains('reduce-motion');
+
+  function renderStats(){
+    const s=S(), lv=Predictor.level();
+    $('#lvlNum').textContent=lv; $('#lvlTitle').textContent=Predictor.title(lv).toUpperCase();
+    $('#xpFill').style.width=(s.points%120/120*100)+'%';
+    $('#xpText').textContent=`${s.points%120}/120 XP to level ${lv+1}`;
+    $('#sPoints').textContent=s.points; $('#sCoins').textContent=s.coins.toLocaleString();
+    $('#sAcc').textContent=Predictor.accuracy()+'%'; $('#sStreak').textContent=s.streak;
+    $('#sExact').textContent=s.exact;
+    const board=Predictor.leaderboard(); $('#sRank').textContent='#'+(board.findIndex(r=>r.you)+1);
+  }
+
+  function pcard(m){
+    const h=team(m.home), a=team(m.away), o=Predictor.odds(m);
+    const saved=S().predictions[m.id];
+    const d = draft[m.id] || (saved? {hs:saved.hs,as:saved.as,stake:saved.stake} : {hs:1,as:0,stake:0});
+    draft[m.id]=d;
+    const pick = d.hs>d.as?'H':d.hs<d.as?'A':'D';
+    const od=o[pick]; const ret=d.stake?Math.round(d.stake*od):0;
+    const callTxt = pick==='H'?`${h.name} to win`:pick==='A'?`${a.name} to win`:'Draw';
+    const sideRow=(t,side,sc)=>`<div class="pc-row">
+        <img class="pc-flag" src="${flag(t.cc)}"><b class="pc-tn">${t.name}</b>
+        <div class="stepper"><button data-side="${side}" data-d="-1" aria-label="minus">−</button><span class="sc">${sc}</span><button data-side="${side}" data-d="1" aria-label="plus">+</button></div>
+      </div>`;
+    const isPotd=m.id===POTD;
+    const c=el('div','pcard'+(saved?' saved':'')+(isPotd?' potd-card':''));
+    c.innerHTML=`
+      ${isPotd?'<div class="potd">⭐ Pick of the Day · correct result scores 2× points</div>':''}
+      <div class="pc-top"><span>${m.stage}</span><span>${localDate(m.kickoff,{month:'short',day:'numeric'})} · ${localTime(m.kickoff)}</span></div>
+      ${sideRow(h,'hs',d.hs)}${sideRow(a,'as',d.as)}
+      <div class="pc-call">Your call: <b>${callTxt}</b> <span class="odd">@ ${od.toFixed(2)}</span></div>
+      <div class="odds-row">${['H','D','A'].map(k=>`<div class="odds-btn ${k===pick?'sel':''}"><small>${k==='H'?h.code:k==='A'?a.code:'Draw'}</small><b>${o[k].toFixed(2)}</b></div>`).join('')}</div>
+      <div class="stake-row"><input type="number" min="0" value="${d.stake||''}" data-stake placeholder="Stake coins (optional)">
+        <span class="stake-chip" data-q="100">+100</span><span class="stake-chip" data-q="500">+500</span><span class="stake-chip" data-q="max">Max</span><span class="stake-chip" data-q="0">Clear</span></div>
+      <div class="pc-return">${d.stake?`Potential return <b style="color:var(--gold)">🪙 ${ret.toLocaleString()}</b> &nbsp;<span class="muted">(+${(ret-d.stake).toLocaleString()} profit)</span>`:'Stake coins to win at these odds — optional.'}</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" data-lock>${saved?'✓ Update pick':'🔒 Lock in pick'}</button>
+      ${saved?`<div class="pc-saved">Locked in: <b>${saved.hs}–${saved.as}</b> · ${saved.pick==='H'?h.code+' win':saved.pick==='A'?a.code+' win':'Draw'}${saved.stake?` · staked 🪙${saved.stake.toLocaleString()}`:''}</div>`:''}`;
+    c.querySelectorAll('.stepper button').forEach(b=>b.onclick=()=>{ const s=b.dataset.side; d[s]=Math.max(0,Math.min(19,(d[s]|0)+(+b.dataset.d))); rerenderCard(m,c); });
+    c.querySelectorAll('.stake-chip').forEach(b=>b.onclick=()=>{ const q=b.dataset.q; d.stake = q==='max'?S().coins : q==='0'?0 : Math.min(S().coins,(d.stake|0)+ +q); rerenderCard(m,c); });
+    c.querySelector('[data-stake]').oninput=e=>{ d.stake=Math.max(0,Math.min(S().coins,e.target.value|0));
+      const pk=d.hs>d.as?'H':d.hs<d.as?'A':'D', r2=d.stake?Math.round(d.stake*o[pk]):0, rr=c.querySelector('.pc-return');
+      if(rr) rr.innerHTML=d.stake?`Potential return <b style="color:var(--gold)">🪙 ${r2.toLocaleString()}</b> &nbsp;<span class="muted">(+${(r2-d.stake).toLocaleString()} profit)</span>`:'Stake coins to win at these odds — optional.'; };
+    c.querySelector('[data-lock]').onclick=()=>{ const pk=d.hs>d.as?'H':d.hs<d.as?'A':'D';
+      if(Predictor.predict(m.id,pk,d.hs,d.as,d.stake)){ toast('Pick locked in! 🔒'); renderStats(); renderPredict(); }
+      else toast('This match has already kicked off'); };
+    return c;
+  }
+  function rerenderCard(m,oldCard){ const nc=pcard(m); oldCard.replaceWith(nc); }
+
+  function renderPredict(){
+    const box=$('#tabPredict'); box.innerHTML=''; POTD=Predictor.currentPOTD();
+    const ups=MATCHES.filter(m=>m.home&&m.away&&m.status==='upcoming').sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff)).slice(0,18);
+    if(!ups.length){ box.innerHTML='<div class="empty">No upcoming matches to predict right now.</div>'; return; }
+    const head=el('div','card'); head.style.cssText='padding:16px 18px;margin-bottom:16px';
+    head.innerHTML=`<b>How it works:</b> <span class="muted" style="font-size:.9rem">Right result = <b style="color:var(--green)">30 pts</b> · right goal difference = <b style="color:var(--green)">60</b> · exact score = <b style="color:var(--gold)">100</b>. Stake coins to win at the odds shown if your result is correct. Predictions lock at kick-off and grade automatically from real results.</span>`;
+    box.appendChild(head);
+    const grid=el('div','pred-grid'); ups.forEach(m=>grid.appendChild(pcard(m))); box.appendChild(grid);
+  }
+
+  function renderPicks(){
+    const box=$('#tabPicks'); const preds=Object.entries(S().predictions).map(([id,p])=>({id:+id,...p}));
+    if(!preds.length){ box.innerHTML='<div class="empty">No predictions yet — head to the Predict tab!</div>'; return; }
+    const byMatch=id=>MATCHES.find(m=>m.id===id);
+    const pending=preds.filter(p=>!p.graded), graded=preds.filter(p=>p.graded).sort((a,b)=>b.id-a.id);
+    const row=(p,done)=>{ const m=byMatch(p.id); if(!m) return ''; const h=team(m.home),a=team(m.away);
+      const pickTxt=p.pick==='H'?h.code:p.pick==='A'?a.code:'Draw';
+      return `<div class="card" style="padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <img src="${flag(h.cc)}" style="width:26px;height:18px;border-radius:3px"><b style="font-size:.9rem">${h.code} v ${a.code}</b>
+        <span class="muted" style="font-size:.8rem">${localDate(m.kickoff,{month:'short',day:'numeric'})}</span>
+        <span style="margin-left:auto;text-align:right">
+          <div style="font-size:.82rem">Pick: <b>${pickTxt} ${p.hs}-${p.as}</b>${p.stake?` · 🪙${p.stake}`:''}</div>
+          ${done?`<div style="font-size:.82rem;color:${p.correct?'var(--green)':'var(--red)'}">${p.correct?'✓':'✗'} ${m.hs}-${m.as} · ${p.pts} pts${p.payout?` · +🪙${p.payout-p.stake}`:(p.stake?` · −🪙${p.stake}`:'')}</div>`:'<div style="font-size:.76rem;color:var(--gold)">⏳ pending</div>'}
+        </span></div>`; };
+    box.innerHTML = (pending.length?`<h3 class="display" style="margin:4px 0 10px">⏳ Pending (${pending.length})</h3>`+pending.map(p=>row(p,false)).join(''):'')
+      + (graded.length?`<h3 class="display" style="margin:18px 0 10px">✓ Graded (${graded.length})</h3>`+graded.map(p=>row(p,true)).join(''):'');
+  }
+
+  function renderBoard(){
+    const box=$('#tabBoard'); const rows=Predictor.leaderboard();
+    box.innerHTML=`<div class="card" style="padding:8px 14px;overflow-x:auto"><table class="board">
+      <thead><tr><th>#</th><th>Player</th><th>Lvl</th><th>Points</th><th>🪙 Coins</th><th>Acc</th></tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr class="${r.you?'you':''}"><td class="rk">${i+1}</td>
+        <td><b>${r.you?'⭐ You':r.name}</b></td><td>${Predictor.level(r.points)}</td><td><b style="color:var(--gold)">${r.points}</b></td>
+        <td>${r.coins.toLocaleString()}</td><td>${r.acc}%</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted" style="font-size:.8rem;margin-top:10px">Climb the global table — outscore every rival manager across the tournament to finish top of the standings.</p>`;
+  }
+
+  function renderBadges(){
+    const box=$('#tabBadges');
+    box.innerHTML=`<div class="badge-grid">${Predictor.badges().map(b=>`<div class="badge ${b.earned?'earned':''}"><div class="bi">${b.icon}</div><b style="display:block;margin:6px 0 3px">${b.name}</b><span class="muted" style="font-size:.76rem">${b.desc}</span></div>`).join('')}</div>`;
+  }
+
+  function renderAll(){ renderStats(); renderPredict(); renderPicks(); renderBoard(); renderBadges(); }
+
+  // tabs
+  $$('.tab[data-tab]').forEach(t=>t.onclick=()=>{ $$('.tab[data-tab]').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+    ['predict','picks','board','badges'].forEach(n=>$('#tab'+n[0].toUpperCase()+n.slice(1)).style.display=(n===t.dataset.tab?'':'none')); });
+  $('#resetBtn').onclick=()=>{ if(confirm('Reset your predictor career (points, coins, picks)?')){ Predictor.reset(); Object.keys(draft).forEach(k=>delete draft[k]); renderAll(); toast('Career reset'); } };
+
+  let _t; function toast(msg){ clearTimeout(_t); let e=$('#toast'); if(!e){ e=el('div','toast'); e.id='toast'; document.body.appendChild(e);} e.innerHTML=msg; e.style.display='block'; _t=setTimeout(()=>e.style.display='none',2600); }
+
+  /* ---- coin count-up ---- */
+  function countUp(elm, from, to){ if(!elm) return; if(reduced()||from===to){ elm.textContent=to.toLocaleString(); return; }
+    const t0=performance.now(), dur=900; (function step(t){ const k=Math.min(1,(t-t0)/dur); const v=Math.round(from+(to-from)*(1-Math.pow(1-k,3))); elm.textContent=v.toLocaleString(); if(k<1) requestAnimationFrame(step); })(t0); }
+
+  /* ---- lightweight confetti (no library) ---- */
+  function confetti(){ if(reduced()) return;
+    let cv=$('#confettiCv'); if(!cv){ cv=el('canvas'); cv.id='confettiCv'; cv.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:300'; document.body.appendChild(cv); }
+    const ctx=cv.getContext('2d'), W=cv.width=innerWidth, H=cv.height=innerHeight;
+    const cols=['#ff2d78','#9b3cff','#3a7bff','#00d6c2','#ffce4d','#1fe08a'];
+    const P=Array.from({length:140},()=>({x:W/2+(Math.random()-.5)*W*.5,y:H*.3+(Math.random()-.5)*60,vx:(Math.random()-.5)*9,vy:Math.random()*-11-4,g:.32,r:Math.random()*6+3,c:cols[(Math.random()*cols.length)|0],a:1,rot:Math.random()*6}));
+    let n=0; (function run(){ n++; ctx.clearRect(0,0,W,H); P.forEach(p=>{ p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=.2; p.a-=.008; ctx.save(); ctx.globalAlpha=Math.max(0,p.a); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.r,-p.r,p.r*2,p.r*1.4); ctx.restore(); });
+      if(n<150) requestAnimationFrame(run); else { ctx.clearRect(0,0,W,H); } })(); }
+
+  /* ---- shareable results card (PNG) ---- */
+  function shareCard(){
+    const s=S(), lv=Predictor.level(), board=Predictor.leaderboard(), rank=board.findIndex(r=>r.you)+1;
+    const W=1080,H=1080,c=el('canvas'); c.width=W;c.height=H; const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,'#ff2d78');g.addColorStop(.4,'#9b3cff');g.addColorStop(.7,'#3a7bff');g.addColorStop(1,'#00d6c2');
+    x.fillStyle='#070710'; x.fillRect(0,0,W,H);
+    x.fillStyle=g; x.globalAlpha=.16; x.fillRect(0,0,W,H); x.globalAlpha=1;
+    // panel
+    x.fillStyle='rgba(255,255,255,.04)'; roundRect(x,60,60,W-120,H-120,40); x.fill();
+    x.textAlign='left'; x.fillStyle='#fff'; x.font='700 40px Archivo, Arial'; x.fillText('WORLD CUP 26 · PREDICTOR', 100, 150);
+    x.font='800 150px Anton, Arial'; x.fillStyle='#ffce4d'; x.fillText(s.points+' PTS', 100, 320);
+    x.fillStyle='#fff'; x.font='600 44px Inter, Arial';
+    const rows=[['Level',lv+' · '+Predictor.title(lv)],['Leaderboard rank','#'+rank+' of '+board.length],['Accuracy',Predictor.accuracy()+'%'],['Coins','🪙 '+s.coins.toLocaleString()],['Best streak',s.bestStreak+' 🔥'],['Exact scores',s.exact+' 🎯']];
+    rows.forEach((r,i)=>{ const y=440+i*92; x.fillStyle='#9b9bc0'; x.font='600 36px Inter, Arial'; x.fillText(r[0], 100, y); x.fillStyle='#fff'; x.font='800 46px Archivo, Arial'; x.fillText(String(r[1]), 560, y); });
+    const earned=Predictor.badges().filter(b=>b.earned).slice(0,8).map(b=>b.icon).join('  ');
+    x.font='60px Arial'; x.fillText(earned||'—', 100, H-110);
+    x.fillStyle='#9b9bc0'; x.font='500 30px Inter, Arial'; x.textAlign='right'; x.fillText('worldcup26 predictor', W-100, H-90);
+    const url=c.toDataURL('image/png'); const a=el('a'); a.href=url; a.download='wc26-predictor-card.png'; a.click();
+    toast('Card saved as PNG 📸');
+  }
+  function roundRect(x,X,Y,w,h,r){ x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath(); }
+  $('#shareBtn').onclick=shareCard;
+
+  /* ---- onboarding (first visit) ---- */
+  function onboarding(){
+    if(localStorage.getItem('wc26_onboard')) return;
+    const steps=[
+      ['🎯 Predict the score','Use the + / − steppers to set each team\'s goals. Your result (win/draw) is picked automatically.'],
+      ['💰 Earn points & coins','Right result = 30 pts · right goal difference = 60 · exact score = 100. Stake coins to win at the odds shown.'],
+      ['🏆 Climb the table','Picks lock at kick-off and grade from real results. Build streaks, grab the Pick of the Day (2×) and top the leaderboard!']
+    ];
+    let i=0; const ov=el('div','ob-overlay');
+    function draw(){ const [t,b]=steps[i]; ov.innerHTML=`<div class="ob-card"><div class="ob-step">${i+1} / 3</div><h2 class="display">${t}</h2><p>${b}</p>
+      <div class="ob-btns"><button class="btn btn-ghost" id="obSkip">Skip</button><button class="btn btn-primary" id="obNext">${i<2?'Next →':'Let\'s play!'}</button></div></div>`;
+      $('#obSkip').onclick=done; $('#obNext').onclick=()=>{ if(i<2){i++;draw();} else done(); }; }
+    function done(){ localStorage.setItem('wc26_onboard','1'); ov.remove(); }
+    document.body.appendChild(ov); draw();
+  }
+
+  /* ---- grade + celebrate, then render; refresh periodically ---- */
+  function handleGrade(full){
+    const res=Predictor.grade();
+    if(res.userGraded && res.userGraded.length){
+      const wins=res.userGraded.filter(r=>r.correct);
+      if(wins.length){ confetti(); const pts=wins.reduce((s,r)=>s+r.pts,0); toast(`✅ <b>Pick won!</b> +${pts} pts${wins.some(w=>w.potd)?' · ⭐ Pick of the Day 2×':''}`); }
+    }
+    const full2=full; renderStats(); renderPicks(); renderBoard(); renderBadges(); if(full2) renderPredict();
+    const nc=S().coins; if(nc!==_prevCoins){ countUp($('#sCoins'), _prevCoins, nc); _prevCoins=nc; }
+  }
+  onboarding();
+  LiveData.refresh(()=>handleGrade(true));
+  setInterval(()=>LiveData.refresh(()=>handleGrade(false)), 60000);
+</script>
+</body>
+</html>

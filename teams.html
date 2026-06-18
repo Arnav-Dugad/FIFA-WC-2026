@@ -118,10 +118,21 @@
         ${fixtures.map(m=>{const o=team(m.home===t.code?m.away:m.home);
           return `<div class="lineup-row"><img class="flag-sm" src="${flag(o.cc)}"><b>vs ${o.name}</b>
           <span class="muted" style="margin-left:auto;font-size:.8rem">${localDate(m.kickoff)} · ${localTime(m.kickoff)}</span></div>`;}).join('')}
+        <h3 class="display" style="font-size:1rem;margin:16px 0 8px">🌍 Country facts <span class="muted" style="font-weight:400;font-size:.7rem">(live)</span></h3>
+        <div id="ctryBox"><span class="muted" style="font-size:.84rem">Loading country data…</span></div>
         <button class="btn btn-gold" id="loadSquad" style="margin:18px 8px 0 0">🔎 Load full squad</button>
         <a href="fixtures.html" class="btn btn-ghost" style="margin-top:18px">Full schedule →</a>
         <div id="squadBox" style="margin-top:16px"></div>
       </div>`);
+    fetchCountry(t.cc).then(c=>{ const box=$('#ctryBox'); if(!box) return;
+      if(!c){ box.innerHTML='<span class="muted" style="font-size:.84rem">Country data unavailable right now.</span>'; return; }
+      box.innerHTML=`<div class="kv-grid">
+        <div class="kv"><span>Capital</span><b style="font-size:.95rem">${c.capital||'—'}</b></div>
+        <div class="kv"><span>Population</span><b style="font-size:.95rem">${c.population?c.population.toLocaleString():'—'}</b></div>
+        <div class="kv"><span>Region</span><b style="font-size:.9rem">${c.region||'—'}</b></div>
+        <div class="kv"><span>Income level</span><b style="font-size:.9rem">${c.income||'—'}</b></div>
+      </div><p class="muted" style="font-size:.7rem;margin-top:6px">Source: World Bank Open Data</p>`;
+    });
     const btn=$('#loadSquad');
     if(btn) btn.onclick=async()=>{
       const box=$('#squadBox'); btn.textContent='⏳ Loading…'; btn.disabled=true;

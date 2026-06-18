@@ -16,115 +16,65 @@
   <div class="wrap">
     <div class="breadcrumb reveal"><a href="index.html">Home</a> / News</div>
     <h1 class="display reveal">World Cup <span style="background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Newsroom</span></h1>
-    <p class="reveal">Live headlines pulled automatically from major outlets — published in your local time. <span id="newsState" class="muted"></span></p>
+    <p class="reveal">Live headlines pulled automatically from major outlets — in your local time. <span id="newsState" class="muted"></span></p>
   </div>
 </section>
 
 <section class="section-tight">
   <div class="wrap">
-    <div class="filterbar reveal" id="catChips">
-      <button class="chip active" data-src="all">All sources</button>
-    </div>
+    <div class="filterbar reveal" id="srcChips"><button class="chip active" data-src="all">All sources</button></div>
     <div class="grid news-grid reveal" id="newsGrid"></div>
   </div>
 </section>
 
 <script src="js/data.js"></script>
+<script src="js/news.js"></script>
 <script src="js/app.js"></script>
 <script>
-  /* ---- free, no-key live news from RSS via CORS proxies ---- */
-  const PROXIES = [
-    { build:u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),        json:true  },
-    { build:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),        json:false },
-    { build:u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),  json:false },
-  ];
-  const FEEDS = [
-    { url:'https://www.theguardian.com/football/world-cup-2026/rss', src:'The Guardian' },
-    { url:'https://www.theguardian.com/football/rss',                src:'The Guardian' },
-    { url:'https://feeds.bbci.co.uk/sport/football/rss.xml',         src:'BBC Sport' },
-  ];
   let ITEMS=[], fc='all';
-
-  function extractImg(item){
-    const ns=(t)=>item.getElementsByTagName(t);
-    let best='', bestW=0;
-    const medias=[...ns('media:content'), ...ns('media:thumbnail')];
-    medias.forEach(m=>{ const u=m.getAttribute('url'); const w=+(m.getAttribute('width')||0); if(u&&(w>=bestW||!best)){ best=u; bestW=w; } });
-    if(!best){ const enc=item.querySelector('enclosure'); if(enc && /image/i.test(enc.getAttribute('type')||'')) best=enc.getAttribute('url')||''; }
-    if(!best){ const d=(item.querySelector('description')||{}).textContent||''; const mm=d.match(/<img[^>]+src=["']([^"']+)["']/i); if(mm) best=mm[1]; }
-    return best;
-  }
-  async function fetchText(url){
-    for(const p of PROXIES){ try{ const r=await fetch(p.build(url),{cache:'no-store'}); if(!r.ok) continue;
-      if(p.json){ const j=await r.json(); if(j && j.contents && j.contents.length>200) return j.contents; }
-      else { const t=await r.text(); if(t && t.length>200) return t; }
-    }catch(e){} }
-    return null;
-  }
-  async function loadFeed(feed){
-    const xml=await fetchText(feed.url); if(!xml) return [];
-    let doc; try{ doc=new DOMParser().parseFromString(xml,'text/xml'); }catch(e){ return []; }
-    if(doc.querySelector('parsererror')) return [];
-    return [...doc.querySelectorAll('item')].slice(0,20).map(it=>{
-      const g=t=>{ const e=it.querySelector(t); return e?e.textContent.trim():''; };
-      return { title:g('title'), link:g('link'), date:g('pubDate')||g('published'),
-        blurb:(g('description')||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().slice(0,200),
-        img:extractImg(it), src:feed.src };
-    }).filter(x=>x.title && x.link);
-  }
-  async function loadAll(){
-    $('#newsState').textContent='· refreshing…';
-    const batches=await Promise.allSettled(FEEDS.map(loadFeed));
-    let all=[]; batches.forEach(b=>{ if(b.status==='fulfilled') all=all.concat(b.value); });
-    // dedupe by title, sort newest first
-    const seen=new Set(); all=all.filter(a=>{ const k=a.title.toLowerCase(); if(seen.has(k))return false; seen.add(k); return true; });
-    all.sort((a,b)=>new Date(b.date)-new Date(a.date));
-    if(all.length){ ITEMS=all; $('#newsState').innerHTML='· <span style="color:var(--green)">●</span> live · auto-updates'; buildChips(); render(); }
-    else { $('#newsState').textContent='· live feed unavailable — showing our desk'; renderFallback(); }
-  }
-
-  function buildChips(){
-    const srcs=[...new Set(ITEMS.map(i=>i.src))];
-    const cc=$('#catChips'); cc.innerHTML='<button class="chip active" data-src="all">All sources</button>';
-    srcs.forEach(s=>{ const b=el('button','chip',s); b.dataset.src=s; cc.appendChild(b); });
-    $$('#catChips .chip').forEach(c=>c.onclick=()=>{ $$('#catChips .chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); fc=c.dataset.src; render(); });
-  }
-
   function timeAgo(d){ const s=(Date.now()-new Date(d))/1000; if(isNaN(s))return''; if(s<3600)return Math.max(1,s/60|0)+'m ago'; if(s<86400)return (s/3600|0)+'h ago'; return (s/86400|0)+'d ago'; }
 
+  function buildChips(){
+    const srcs=[...new Set(ITEMS.map(i=>i.src).filter(Boolean))];
+    const cc=$('#srcChips'); cc.innerHTML='<button class="chip active" data-src="all">All sources</button>';
+    srcs.forEach(s=>{ const b=el('button','chip',s); b.dataset.src=s; cc.appendChild(b); });
+    $$('#srcChips .chip').forEach(c=>c.onclick=()=>{ $$('#srcChips .chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); fc=c.dataset.src; render(); });
+  }
   function render(){
     const g=$('#newsGrid'); g.innerHTML='';
-    let list=fc==='all'?ITEMS:ITEMS.filter(i=>i.src===fc);
+    let list = fc==='all'?ITEMS:ITEMS.filter(i=>i.src===fc);
+    if(!list.length){ g.innerHTML='<div class="empty" style="grid-column:1/-1">No headlines right now.</div>'; return; }
     list.slice(0,30).forEach((n,i)=>{
       const c=el('div','card news-card'+(i===0&&fc==='all'?' news-feature':''));
       const imgSrc=n.img||cityImg(n.title,'World Cup 2026');
-      c.innerHTML=`<div class="news-img"><span class="cat">${n.src}</span><img src="${imgSrc}" alt="" referrerpolicy="no-referrer"></div>
-        <div class="news-body"><div class="date">${n.date?localDate(n.date,{weekday:'short',month:'short',day:'numeric'}):''} · ${n.date?localTime(n.date):''} <span class="muted">· ${timeAgo(n.date)}</span></div>
-        <h3>${n.title}</h3><p class="blurb">${n.blurb||''}</p>
-        <span class="link-more">Read full story ↗</span></div>`;
-      const im=c.querySelector('.news-img img'); im.onerror=()=>{ im.src=cityImg(n.title,'World Cup 2026'); };
+      c.innerHTML=`<div class="news-img"><span class="cat">${n.src||'News'}</span><img src="${imgSrc}" alt="" referrerpolicy="no-referrer"></div>
+        <div class="news-body"><div class="date">${n.date?localDate(n.date,{weekday:'short',month:'short',day:'numeric'}):''} ${n.date?('· '+localTime(n.date)):''} <span class="muted">· ${timeAgo(n.date)}</span></div>
+        <h3>${n.title}</h3><p class="blurb">${n.blurb||''}</p><span class="link-more">Read full story ↗</span></div>`;
+      const im=c.querySelector('.news-img img'); im.onerror=()=>{ im.onerror=null; im.src=cityImg(n.title,'World Cup 2026'); };
       c.onclick=()=>window.open(n.link,'_blank','noopener');
       g.appendChild(c);
     });
   }
-
-  /* fallback to our curated desk if the live feed can't be reached */
   function renderFallback(){
+    ITEMS = NEWS.map(n=>({ title:n.title, link:'#', date:n.date, blurb:n.blurb, img:'', src:n.cat }));
     const g=$('#newsGrid'); g.innerHTML='';
     [...NEWS].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((n,i)=>{
       const c=el('div','card news-card'+(i===0?' news-feature':'')); const venue=stadium(n.img);
       c.innerHTML=`<div class="news-img"><span class="cat">${n.cat}</span><img src="${cityImg(n.img,venue.city||n.img)}" alt=""></div>
         <div class="news-body"><div class="date">${localDate(n.date,{weekday:'short',month:'short',day:'numeric'})} · ${localTime(n.date)}</div>
         <h3>${n.title}</h3><p class="blurb">${n.blurb}</p></div>`;
-      c.onclick=()=>showModal(`<div class="news-img" style="height:200px;border-radius:22px 22px 0 0"><span class="cat">${n.cat}</span><img src="${cityImg(n.img,n.img)}" style="width:100%;height:100%;object-fit:cover"></div>
-        <div class="modal-body"><p class="sub">${localDateFull(n.date)}</p><h2 style="margin-bottom:12px">${n.title}</h2><p style="color:var(--muted)">${n.blurb}</p></div>`);
       g.appendChild(c); loadVenuePhoto(c.querySelector('.news-img img'), venue.wiki);
     });
   }
-
+  async function loadNews(){
+    $('#newsState').textContent='· refreshing…';
+    const items = await NewsFeed.load();
+    if(items && items.length){ ITEMS=items; $('#newsState').innerHTML='· <span style="color:var(--green)">●</span> live · auto-updates'; buildChips(); render(); }
+    else { $('#newsState').textContent='· live feed unavailable — showing our desk'; renderFallback(); }
+  }
   $('#newsGrid').innerHTML='<div class="empty" style="grid-column:1/-1">Loading the latest headlines…</div>';
-  loadAll();
-  setInterval(loadAll, 10*60000); // auto-refresh every 10 minutes
+  loadNews();
+  setInterval(loadNews, 10*60000);
 </script>
 </body>
 </html>

@@ -1,7 +1,5 @@
 # 🏆 World Cup 2026 Hub
 
-https://arnav-dugad.github.io/FIFA-WC-2026/
-
 A premium, fully responsive, **multi-page fan website** for the FIFA World Cup 2026 (USA · Canada · Mexico). Pure HTML/CSS/JavaScript — no build step, no server, no API keys, **100% free**.
 
 ## ▶ How to open
@@ -37,11 +35,14 @@ Everything is data-driven from **`js/data.js`**. As real results land, edit a ma
 - **Live status & scores:** `js/live-data.js` derives each match's *real* status (upcoming / in-play / full-time) and live minute from the actual kickoff time, and pulls **real scores** from TheSportsDB's free, CORS-enabled feed when a match is in play. If the feed is unavailable it shows the real status and **never invents a scoreline**.
 - **Stadium photos:** loaded live from **Wikipedia** (free), with a generated SVG fallback so images never break.
 
-## 📡 Free real-time data sources (no API key)
-- **openfootball/worldcup.json** — public-domain GitHub feed (CORS-enabled). Primary source for **results** and for **auto-resolving the knockout bracket** as the tournament progresses.
-- **TheSportsDB** free feed — best-effort **in-play live scores**; also powers the on-demand **full-squad loader with player photos** in the team profile.
-- **Wikipedia REST API** — real **stadium photos** and **player headshots** (avatar fallback so nothing ever breaks).
-- All three are wrapped in `try/catch` with a clock-based fallback — the site is fully correct even offline and never invents a scoreline.
+## 📡 Free data sources (all no API key, CORS-enabled)
+- **openfootball/worldcup.json** — public-domain GitHub feed. Primary source for **results, goal scorers & half-time scores**, and for **auto-resolving the knockout bracket**.
+- **TheSportsDB** (free key `3`) — best-effort **in-play live scores** + on-demand **full national squads with player photos**.
+- **Wikipedia REST API** — real **stadium photos**, **player headshots** and **bios**.
+- **open-meteo** — real **match-day weather** for each venue (live center).
+- **The Guardian + BBC Sport + Google News RSS** (via free CORS proxies allorigins/codetabs/corsproxy) — real **auto-updating news** with images, plus **per-match related headlines**.
+- **World Bank Open Data** — real **country facts** (capital, population, region, income) in the team profile.
+- All are wrapped in `try/catch` with graceful fallbacks — the site stays correct (and never invents a scoreline) even when a feed is unavailable.
 
 ## ⭐ Premium features
 - **Match detail modal** (tap any fixture): score/countdown, venue, win-probability, players to watch, and **Add to Calendar (.ics)**.
