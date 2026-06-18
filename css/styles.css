@@ -1,36 +1,40 @@
 /* =====================================================================
-   FIFA WORLD CUP 2026 — DESIGN SYSTEM
-   A premium, dark, glassmorphic theme with a green-pitch + gold accent.
+   WORLD CUP 26 — DESIGN SYSTEM
+   Bold tournament identity: ink-black canvas, a vibrant multicolour
+   signature gradient (magenta → violet → blue → teal) and gold trophy.
    ===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800;900&display=swap');
 :root{
-  --bg:#05070d;
-  --bg-2:#0a0f1c;
-  --surface:#0e1422;
-  --surface-2:#131b2e;
-  --card:rgba(255,255,255,.04);
-  --card-border:rgba(255,255,255,.08);
-  --text:#eef2f8;
-  --muted:#93a0b8;
-  --faint:#5c677d;
+  --bg:#06060d;
+  --bg-2:#0b0b16;
+  --surface:#101023;
+  --surface-2:#17162e;
+  --card:rgba(255,255,255,.045);
+  --card-border:rgba(255,255,255,.09);
+  --text:#f3f1fb;
+  --muted:#9b9bc0;
+  --faint:#64647f;
 
-  --green:#00c46a;
-  --green-deep:#009b54;
-  --gold:#ffd24c;
-  --gold-deep:#e8b51c;
-  --red:#ff4d5e;
-  --blue:#4da3ff;
-  --purple:#9b6cff;
+  --green:#1fe08a;
+  --green-deep:#0fb86f;
+  --gold:#ffce4d;
+  --gold-deep:#f0a81c;
+  --red:#ff3b6b;
+  --blue:#3a7bff;
+  --purple:#9b3cff;
+  --magenta:#ff2d78;
+  --cyan:#00d6c2;
 
-  --grad-hero:linear-gradient(135deg,#00c46a 0%,#0a8bd6 50%,#9b6cff 100%);
-  --grad-gold:linear-gradient(135deg,#ffd24c,#ff9d2f);
+  --grad-hero:linear-gradient(100deg,#ff2d78 0%,#9b3cff 38%,#3a7bff 68%,#00d6c2 100%);
+  --grad-gold:linear-gradient(135deg,#ffd96b,#ff9d2f);
   --grad-pitch:linear-gradient(160deg,#0a3d23 0%,#062818 100%);
 
-  --radius:18px;
+  --radius:20px;
   --radius-sm:12px;
-  --shadow:0 18px 50px -18px rgba(0,0,0,.65);
-  --shadow-glow:0 0 40px -8px rgba(0,196,106,.35);
+  --shadow:0 22px 60px -22px rgba(0,0,0,.72);
+  --shadow-glow:0 0 46px -8px rgba(155,60,255,.45);
   --maxw:1240px;
-  --header-h:68px;
+  --header-h:70px;
   font-synthesis:none;
 }
 
@@ -39,8 +43,9 @@ html{scroll-behavior:smooth}
 body{
   font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(0,196,106,.14), transparent 60%),
-    radial-gradient(1000px 500px at -10% 10%, rgba(75,163,255,.12), transparent 55%),
+    radial-gradient(1100px 560px at 82% -12%, rgba(255,45,120,.16), transparent 60%),
+    radial-gradient(900px 520px at -8% 8%, rgba(155,60,255,.16), transparent 58%),
+    radial-gradient(900px 600px at 50% 120%, rgba(0,214,194,.10), transparent 60%),
     var(--bg);
   color:var(--text);
   line-height:1.6;
@@ -50,7 +55,8 @@ body{
 }
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
-.display{font-family:'Oswald','Inter',sans-serif;font-weight:700;letter-spacing:-.5px;text-transform:uppercase}
+.display{font-family:'Archivo','Inter',sans-serif;font-weight:800;letter-spacing:-.4px;text-transform:uppercase}
+.hero h1,.page-hero h1{font-family:'Anton','Archivo',sans-serif;font-weight:400;letter-spacing:.6px;text-transform:uppercase}
 
 /* ---------- layout helpers ---------- */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
@@ -75,15 +81,22 @@ img{max-width:100%;display:block}
 .site-header{
   position:sticky;top:0;z-index:50;height:var(--header-h);
   backdrop-filter:blur(18px);
-  background:rgba(7,10,18,.72);
+  background:rgba(8,8,18,.78);
   border-bottom:1px solid var(--card-border);
 }
+.site-header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-hero);opacity:.9}
 .nav{height:100%;display:flex;align-items:center;justify-content:space-between;gap:18px}
 .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.05rem}
 .brand .logo{
-  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
-  background:var(--grad-hero);font-size:1.2rem;box-shadow:var(--shadow-glow);
+  width:40px;height:40px;border-radius:12px;overflow:hidden;flex:0 0 auto;
+  box-shadow:var(--shadow-glow);
 }
+.emblem{width:100%;height:100%;display:block}
+.em-shine{animation:emShine 5s ease-in-out infinite}
+@keyframes emShine{0%,55%{transform:translateX(0)}78%{transform:translateX(66px)}100%{transform:translateX(66px)}}
+.icon-btn{background:none;border:1px solid var(--card-border);color:var(--muted);width:40px;height:40px;border-radius:10px;font-size:1rem;cursor:pointer;transition:.15s;flex:0 0 auto}
+.icon-btn:hover{color:var(--text);border-color:rgba(155,60,255,.5)}
+.icon-btn.on{color:var(--gold);border-color:rgba(255,206,77,.5)}
 .brand b{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .brand small{display:block;font-size:.62rem;letter-spacing:2px;color:var(--muted);font-weight:600}
 .nav-links{display:flex;align-items:center;gap:4px}
@@ -93,6 +106,8 @@ img{max-width:100%;display:block}
 }
 .nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05)}
 .nav-links a.active{color:var(--text);background:rgba(0,196,106,.12)}
+.nav-links a.pred-link{color:var(--gold)}
+.nav-links a.pred-link::before{content:'🎯';margin-right:5px}
 .nav-links a.live-link{color:var(--red)}
 .nav-links a.live-link::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;margin-right:6px;animation:blink 1.2s infinite}
 .nav-right{display:flex;align-items:center;gap:12px}
@@ -121,8 +136,8 @@ img{max-width:100%;display:block}
 .hero p.lead{font-size:1.12rem;color:var(--muted);max-width:540px}
 .hero-cta{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:12px;font-weight:700;font-size:.95rem;cursor:pointer;border:1px solid transparent;transition:.2s;white-space:nowrap}
-.btn-primary{background:var(--grad-hero);color:#04130c;box-shadow:var(--shadow-glow)}
-.btn-primary:hover{transform:translateY(-2px)}
+.btn-primary{background:var(--grad-hero);color:#fff;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.35);box-shadow:var(--shadow-glow)}
+.btn-primary:hover{transform:translateY(-2px);filter:brightness(1.08)}
 .btn-ghost{background:var(--card);border-color:var(--card-border);color:var(--text)}
 .btn-ghost:hover{background:rgba(255,255,255,.08)}
 .btn-gold{background:var(--grad-gold);color:#1a1200}
@@ -174,7 +189,7 @@ img{max-width:100%;display:block}
 .groups-grid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
 .group-card{padding:0}
 .group-head{display:flex;align-items:center;gap:10px;padding:15px 18px;background:linear-gradient(90deg,rgba(0,196,106,.12),transparent);border-bottom:1px solid var(--card-border)}
-.group-head .gl{width:34px;height:34px;border-radius:9px;background:var(--grad-hero);display:grid;place-items:center;font-family:'Oswald';font-weight:700;color:#04130c}
+.group-head .gl{width:34px;height:34px;border-radius:9px;background:var(--grad-hero);display:grid;place-items:center;font-family:'Oswald';font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
 .group-head h3{font-size:1rem}
 .standings{width:100%;border-collapse:collapse;font-size:.85rem}
 .standings th{text-align:center;font-size:.66rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:9px 4px;font-weight:600}
@@ -222,7 +237,7 @@ img{max-width:100%;display:block}
 .filterbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:26px;align-items:center}
 .chip{padding:8px 16px;border-radius:999px;font-size:.84rem;font-weight:600;background:var(--card);border:1px solid var(--card-border);color:var(--muted);cursor:pointer;transition:.16s}
 .chip:hover{color:var(--text);border-color:rgba(0,196,106,.4)}
-.chip.active{background:var(--grad-hero);color:#04130c;border-color:transparent}
+.chip.active{background:var(--grad-hero);color:#fff;font-weight:700;border-color:transparent}
 .search-input{flex:1;min-width:180px;max-width:300px;padding:10px 16px;border-radius:11px;background:var(--card);border:1px solid var(--card-border);color:var(--text);font-size:.9rem;outline:none}
 .search-input:focus{border-color:var(--green)}
 
@@ -312,6 +327,12 @@ img{max-width:100%;display:block}
 .goal-pin .gm{font-family:Oswald;font-weight:700;color:var(--gold)}
 .goal-pin.on{border-color:var(--gold);background:rgba(255,210,76,.12)}
 
+/* ---------- per-match / inline news links ---------- */
+.md-news{display:block;padding:9px 0;border-bottom:1px solid var(--card-border);transition:.15s}
+.md-news:hover{padding-left:5px}
+.md-news-t{display:block;font-size:.88rem;font-weight:600;line-height:1.3}
+.md-news-m{display:block;font-size:.72rem;color:var(--muted);margin-top:2px}
+
 /* ---------- NEWS ---------- */
 .news-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 .news-card{display:flex;flex-direction:column;cursor:pointer}
@@ -375,7 +396,34 @@ img{max-width:100%;display:block}
 .reveal{opacity:0;transform:translateY(24px);transition:.7s cubic-bezier(.2,.7,.2,1)}
 .reveal.in{opacity:1;transform:none}
 
+/* back-to-top */
+.to-top{position:fixed;right:18px;bottom:18px;width:46px;height:46px;border-radius:50%;border:1px solid var(--card-border);background:rgba(14,20,34,.92);backdrop-filter:blur(8px);color:var(--text);font-size:1.3rem;cursor:pointer;opacity:0;pointer-events:none;transform:translateY(12px);transition:.25s;z-index:60}
+.to-top.show{opacity:1;pointer-events:auto;transform:none}
+.to-top:hover{border-color:var(--green);color:var(--green)}
+
+/* layout polish — consistent section rhythm + dividers */
+.section-head{border-bottom:1px solid var(--card-border);padding-bottom:16px}
+.page-hero h1::after{content:'';display:block;width:64px;height:4px;border-radius:3px;background:var(--grad-gold);margin-top:14px}
+.card{will-change:transform}
+.home-promo{display:flex;align-items:center;gap:16px;padding:20px 24px;border-radius:18px;background:linear-gradient(120deg,rgba(255,210,76,.16),rgba(0,196,106,.14));border:1px solid var(--card-border);transition:.2s}
+.home-promo:hover{transform:translateY(-3px);border-color:rgba(255,210,76,.5)}
+.home-promo .pi{font-size:2.2rem}
+.home-promo b{font-size:1.15rem}
+.home-promo .muted{font-size:.9rem}
+
 /* ---------- RESPONSIVE ---------- */
+/* collapse the (now longer) nav into the hamburger earlier */
+@media(max-width:1024px){
+  .nav-links{
+    position:fixed;top:var(--header-h);left:0;right:0;flex-direction:column;align-items:stretch;
+    background:rgba(7,10,18,.98);backdrop-filter:blur(20px);padding:14px;gap:4px;
+    border-bottom:1px solid var(--card-border);transform:translateY(-160%);transition:.3s;z-index:49;max-height:calc(100vh - var(--header-h));overflow:auto;
+  }
+  .nav-links.open{transform:none}
+  .nav-links a{padding:13px 14px;font-size:1rem}
+  .burger{display:grid;place-items:center}
+  .tz-badge{display:none}
+}
 @media(max-width:980px){
   .hero-grid{grid-template-columns:1fr}
   .live-wrap{grid-template-columns:1fr}
@@ -433,6 +481,9 @@ img{max-width:100%;display:block}
   .scroll-x>*{flex-basis:78vw}
 }
 @media(max-width:420px){
+  .icon-btn,.notif-bell,.burger{width:36px;height:36px;font-size:.95rem}
+  .nav-right{gap:7px}
+  .brand small{display:none}
   .hero h1{font-size:2.2rem}
   .match-teams{gap:5px}
   .mt-side{gap:7px}
@@ -442,6 +493,34 @@ img{max-width:100%;display:block}
   .round-col{flex-basis:84vw;min-width:84vw}
 }
 /* nicer focus + tap highlight */
-a,button,input{-webkit-tap-highlight-color:rgba(0,196,106,.25)}
-:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+a,button,input{-webkit-tap-highlight-color:rgba(155,60,255,.25)}
+:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
 @media(hover:none){ .card:hover{transform:none} }
+
+/* ============ LIGHT THEME ============ */
+html.light{
+  --bg:#eceef6; --bg-2:#e3e6f2; --surface:#ffffff; --surface-2:#f2f3fb;
+  --card:rgba(18,20,45,.04); --card-border:rgba(20,30,80,.14);
+  --text:#161726; --muted:#5a6178; --faint:#8b91aa;
+  --shadow:0 18px 44px -22px rgba(40,30,90,.25);
+}
+html.light body{
+  background:
+    radial-gradient(1100px 560px at 82% -12%, rgba(255,45,120,.10), transparent 60%),
+    radial-gradient(900px 520px at -8% 8%, rgba(155,60,255,.10), transparent 58%),
+    radial-gradient(900px 600px at 50% 120%, rgba(0,170,160,.08), transparent 60%),
+    var(--bg);
+}
+html.light .site-header{background:rgba(255,255,255,.85)}
+html.light .nav-links a{color:#454b69}
+html.light .nav-links a:hover{background:rgba(20,30,80,.06)}
+html.light .tz-badge,html.light .icon-btn,html.light .notif-bell,html.light .burger{background:#fff}
+html.light .search-input,html.light .chip,html.light .tab,html.light .stepper button{background:#fff}
+html.light .modal-close{background:rgba(0,0,0,.35)}
+
+/* ============ REDUCED MOTION ============ */
+html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{
+  animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important;
+}
+html.reduce-motion .reveal{opacity:1 !important;transform:none !important}
+@media(prefers-reduced-motion:reduce){ html:not(.reduce-motion) .reveal{transition-duration:.2s} }
