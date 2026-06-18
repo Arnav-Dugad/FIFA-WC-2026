@@ -9,6 +9,37 @@ const $  = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
 
+/* ----------  bespoke brand emblem ("26" trophy mark) — original artwork  ---------- */
+const BRAND_SVG = `<svg class="emblem" viewBox="0 0 48 48" aria-hidden="true" role="img">
+  <defs>
+    <linearGradient id="emg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff2d78"/><stop offset=".4" stop-color="#9b3cff"/><stop offset=".72" stop-color="#3a7bff"/><stop offset="1" stop-color="#00d6c2"/>
+    </linearGradient>
+    <clipPath id="emc"><rect width="48" height="48" rx="13"/></clipPath>
+  </defs>
+  <g clip-path="url(#emc)">
+    <rect width="48" height="48" fill="url(#emg)"/>
+    <path d="M17 8h14v5c0 5-3.1 8-7 8s-7-3-7-8z M13 10h4v2.5a4.2 4.2 0 0 1-4-2.5z M31 10h4a4.2 4.2 0 0 1-4 2.5z M22.2 21h3.6v4.4h-3.6z M17.5 31.5h13v3h-13z" fill="#fff" opacity=".22"/>
+    <text x="24" y="33" text-anchor="middle" font-family="Anton, Archivo, Arial" font-weight="700" font-size="22" fill="#fff">26</text>
+    <g class="em-shine"><rect x="-34" y="-12" width="11" height="72" fill="#fff" opacity=".22" transform="rotate(18 24 24)"/></g>
+  </g>
+</svg>`;
+
+/* ----------  user preferences: theme + reduced motion  ---------- */
+const Prefs = (() => {
+  function theme(){ return localStorage.getItem('wc26_theme') || 'dark'; }
+  function motionReduced(){ const s=localStorage.getItem('wc26_motion'); if(s) return s==='reduced'; return matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  function apply(){
+    document.documentElement.classList.toggle('light', theme()==='light');
+    document.documentElement.classList.toggle('reduce-motion', motionReduced());
+    const tb=document.getElementById('themeToggle'); if(tb) tb.textContent = theme()==='light'?'🌙':'☀️';
+    const mb=document.getElementById('motionToggle'); if(mb){ mb.textContent = motionReduced()?'🟰':'〰️'; mb.classList.toggle('on', motionReduced()); }
+  }
+  function toggleTheme(){ localStorage.setItem('wc26_theme', theme()==='light'?'dark':'light'); apply(); }
+  function toggleMotion(){ localStorage.setItem('wc26_motion', motionReduced()?'on':'reduced'); apply(); }
+  return { theme, motionReduced, apply, toggleTheme, toggleMotion };
+})();
+
 /* ----------  flags  ---------- */
 const TBD_FLAG = 'data:image/svg+xml,'+encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='60' height='40'><rect width='60' height='40' fill='#1a2336'/><text x='30' y='26' text-anchor='middle' font-family='Arial' font-size='16' fill='#5c677d'>?</text></svg>");
@@ -72,7 +103,7 @@ const tzAbbr = (() => {
 
 function localTime(iso){
   const d = new Date(iso);
-  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', hour12:true});
 }
 function localDate(iso, opts){
   const d = new Date(iso);
@@ -93,6 +124,9 @@ function relativeKO(iso){
 /* ----------  TEAM / STADIUM lookups  ---------- */
 const team = code => TEAM_BY_CODE[code] || {name:code||'TBD', cc:'un', code:code||'?', c1:'#333', c2:'#666', rank:'–'};
 const stadium = id => STADIUMS.find(s=>s.id===id) || {name:'TBD', city:'', cc:'un'};
+
+/* hex → rgba helper (kit-colour tints) */
+function hexA(hex,a){ hex=(hex||'#888888').replace('#',''); if(hex.length===3) hex=hex.split('').map(x=>x+x).join(''); const n=parseInt(hex,16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }
 
 /* ----------  player avatar (generated SVG, no external photo needed)  ---------- */
 function avatarStyle(t){
@@ -362,7 +396,7 @@ function matchDetail(m){
   }
   let predHtml='';
   if(known){ const w=predictMatch(m);
-    predHtml=`<h3 class="display" style="font-size:1rem;margin:18px 0 8px">🔮 Win probability <span class="muted" style="font-weight:400;font-size:.7rem">(ranking model)</span></h3>
+    predHtml=`<h3 class="display" style="font-size:1rem;margin:18px 0 8px">🔮 Win Probability</h3>
       <div class="sr-bar" style="height:14px"><span class="h" style="width:${w.pH}%"></span><span style="width:${w.draw}%;background:rgba(255,255,255,.18)"></span><span class="a" style="width:${w.pA}%"></span></div>
       <div style="display:flex;justify-content:space-between;font-size:.74rem;margin-top:5px"><b>${h.code} ${w.pH}%</b><span class="muted">Draw ${w.draw}%</span><b>${w.pA}% ${a.code}</b></div>`;
   }
@@ -380,14 +414,9 @@ function matchDetail(m){
       </div>
       <h2 style="margin:10px 0 2px;font-size:1.3rem">${h.name} <span class="muted">vs</span> ${a.name}</h2>
       <p class="sub">📍 ${st.name}, ${st.city} · ${localDateFull(m.kickoff)} · ${localTime(m.kickoff)} ${tzAbbr}</p>
-      ${known?`<div class="form-badges" id="mdForm" style="margin:14px 0 6px"></div>
-        <div class="pitch-wrap compact"><canvas id="mdPitch"></canvas></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0">
-          <span class="pitch-caption" style="margin:0">Illustrative animation — formations &amp; goals are real.</span>
-          <button class="btn btn-gold pitch-replay" id="mdReplay" style="display:none;padding:7px 12px">▶ Replay goals</button>
-        </div>`:''}
       ${goalsHtml}
       ${predHtml}
+      ${known?`<h3 class="display" style="font-size:1rem;margin:18px 0 8px">📰 Related news</h3><div id="mdNews"><span class="muted" style="font-size:.84rem">Searching headlines…</span></div>`:''}
       ${known?`<h3 class="display" style="font-size:1rem;margin:18px 0 8px">👕 Players to watch</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div>${lineupCol(m.home,'left')}</div><div>${lineupCol(m.away,'right')}</div></div>`:''}
       <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
@@ -396,15 +425,16 @@ function matchDetail(m){
         <a href="live.html?match=${m.id}" class="btn btn-primary">🔴 Live center</a>
       </div>
     </div>`);
-  if(known){
-    ensurePitch().then(()=>{
-      const cv=$('#mdPitch'); if(!cv || !window.createPitch) return;
-      const rb=$('#mdReplay');
-      const setLbl=(active)=>{ if(rb) rb.textContent = active?'⏭ Skip':'▶ Replay goals'; };
-      _modalPitch=createPitch(cv, m, {compact:true, autoReplay:true, onReplayState:setLbl});
-      const fb=$('#mdForm'); if(fb){ const f=_modalPitch.formations();
-        fb.innerHTML=`<span class="fbadge"><img src="${flag(h.cc)}">${h.code} <b>${f.home}</b></span><span class="fbadge"><img src="${flag(a.cc)}">${a.code} <b>${f.away}</b></span>`; }
-      if(rb && _modalPitch.hasGoals()){ rb.style.display=''; rb.onclick=()=>{ _modalPitch.isReplaying()?_modalPitch.stopReplay():_modalPitch.replayGoals(); }; }
+  if(known && typeof ensureNews==='function'){
+    ensureNews().then(()=>{
+      if(!window.NewsFeed) { const b=$('#mdNews'); if(b) b.innerHTML='<span class="muted" style="font-size:.84rem">News unavailable right now.</span>'; return; }
+      NewsFeed.forMatch(h.name, a.name).then(items=>{
+        const box=$('#mdNews'); if(!box) return;
+        if(!items || !items.length){ box.innerHTML='<span class="muted" style="font-size:.84rem">No related headlines found yet.</span>'; return; }
+        box.innerHTML=items.slice(0,5).map(n=>`<a class="md-news" href="${n.link}" target="_blank" rel="noopener">
+          <span class="md-news-t">${n.title}</span>
+          <span class="md-news-m">${n.src||''}${n.date?(' · '+localDate(n.date,{month:'short',day:'numeric'})):''} ↗</span></a>`).join('');
+      });
     });
   }
 }
@@ -453,20 +483,22 @@ const Notif = (() => {
 function buildChrome(active){
   const links = [
     ['index.html','Home'],['fixtures.html','Fixtures'],['bracket.html','Bracket'],['teams.html','Teams'],
-    ['players.html','Players'],['stats.html','Stats'],['stadiums.html','Stadiums'],
-    ['news.html','News'],['live.html','Live','live-link'],
+    ['players.html','Players'],['stats.html','Stats'],['stadiums.html','Stadiums'],['news.html','News'],
+    ['predictor.html','Predictor','pred-link'],['live.html','Live','live-link'],
   ];
   const header = el('header','site-header');
   header.innerHTML = `
     <div class="wrap nav">
       <a class="brand" href="index.html">
-        <span class="logo">🏆</span>
-        <span>WORLD CUP <b>2026</b><small>USA · CAN · MEX</small></span>
+        <span class="logo">${BRAND_SVG}</span>
+        <span>WORLD CUP <b>26</b><small>USA · CAN · MEX</small></span>
       </a>
       <nav class="nav-links" id="navLinks">
         ${links.map(([h,t,c])=>`<a href="${h}" class="${c||''} ${active===h?'active':''}">${t}</a>`).join('')}
       </nav>
       <div class="nav-right">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle light/dark" title="Light / dark theme">☀️</button>
+        <button class="icon-btn" id="motionToggle" aria-label="Toggle motion" title="Reduce motion">〰️</button>
         <button class="notif-bell" id="notifBell" aria-label="Match alerts" title="Enable match alerts">🔔</button>
         <span class="tz-badge" title="Times shown in your local zone">🕑 <b>${tzAbbr||'Local'}</b> ${USER_TZ.split('/').pop().replace('_',' ')}</span>
         <button class="burger" id="burger" aria-label="Menu">☰</button>
@@ -475,6 +507,9 @@ function buildChrome(active){
   document.body.prepend(header);
   $('#burger').onclick = () => $('#navLinks').classList.toggle('open');
   $('#notifBell').onclick = () => Notif.toggle();
+  $('#themeToggle').onclick = () => Prefs.toggleTheme();
+  $('#motionToggle').onclick = () => Prefs.toggleMotion();
+  Prefs.apply();
   Notif.updateBell();
   Notif.check();
   setInterval(()=>Notif.check(), 60000);
@@ -485,9 +520,9 @@ function buildChrome(active){
       <div class="footer-grid">
         <div>
           <a class="brand" href="index.html" style="margin-bottom:14px">
-            <span class="logo">🏆</span><span>WORLD CUP <b>2026</b></span>
+            <span class="logo">${BRAND_SVG}</span><span>WORLD CUP <b>26</b></span>
           </a>
-          <p>Your free, unofficial home for FIFA World Cup 2026 — all 48 teams, 104 matches, live stats and every kick-off in your own time zone.</p>
+          <p>The complete matchday companion for the 2026 World Cup — 48 nations, 104 matches, live scores and standings, with every kick-off shown in your own time zone.</p>
         </div>
         <div><h5>Follow</h5>
           <a href="fixtures.html">Fixtures &amp; Results</a><a href="live.html">Live Match Center</a>
@@ -500,11 +535,35 @@ function buildChrome(active){
           <a href="#">3 Nations · 48 Teams</a><a href="#">Final: MetLife Stadium</a></div>
       </div>
       <div class="footer-bottom">
-        <span>© 2026 World Cup 2026 Hub · A fan-made project. Not affiliated with FIFA.</span>
-        <span>Times localised to <b style="color:var(--green)">${USER_TZ}</b> · Built with ♥ for football</span>
+        <span>© 2026 World Cup 26 · Independent matchday companion.</span>
+        <span>All times shown in <b style="color:var(--green)">${USER_TZ}</b></span>
       </div>
     </div>`;
   document.body.appendChild(footer);
+
+  // back-to-top button (all pages)
+  const top=el('button','to-top','↑'); top.id='toTop'; top.title='Back to top'; top.setAttribute('aria-label','Back to top');
+  top.onclick=()=>window.scrollTo({top:0,behavior:'smooth'}); document.body.appendChild(top);
+  const onScroll=()=>{ top.classList.toggle('show', window.pageYOffset>500); };
+  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+}
+
+/* ----------  World Bank Open Data (free, no key, CORS) — real country facts  ---------- */
+const _ctryCache={};
+function fetchCountry(cc){
+  const code = (/^gb-/.test(cc) ? 'gb' : cc).toUpperCase();
+  if(_ctryCache[code]!==undefined) return Promise.resolve(_ctryCache[code]);
+  return fetch(`https://api.worldbank.org/v2/country/${code}?format=json`)
+    .then(r=>r.ok?r.json():null)
+    .then(async j=>{
+      const c=(j && j[1] && j[1][0]) || null;
+      if(!c || !c.name){ _ctryCache[code]=null; return null; }
+      let population=null;
+      try{ const pr=await fetch(`https://api.worldbank.org/v2/country/${code}/indicator/SP.POP.TOTL?format=json&mrnev=1`); const pj=await pr.json(); population=pj && pj[1] && pj[1][0] && pj[1][0].value; }catch(e){}
+      const out={ capital:c.capitalCity||'', region:(c.region&&c.region.value||'').trim(), income:(c.incomeLevel&&c.incomeLevel.value||'').trim(), lat:+c.latitude||null, lng:+c.longitude||null, population };
+      _ctryCache[code]=out; return out;
+    })
+    .catch(()=>{ _ctryCache[code]=null; return null; });
 }
 
 /* ----------  COUNTDOWN  ---------- */
@@ -525,15 +584,18 @@ function startCountdown(targetIso, mountSel){
 
 /* ----------  scroll reveal  ---------- */
 function initReveal(){
-  const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);} }),{threshold:.12});
-  $$('.reveal').forEach(n=>io.observe(n));
+  const nodes=$$('.reveal');
+  if(!('IntersectionObserver' in window)){ nodes.forEach(n=>n.classList.add('in')); return; }
+  // threshold 0 so any pixel entering reveals it (tall grids no longer stay hidden)
+  const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);} }),{threshold:0, rootMargin:'0px 0px -8% 0px'});
+  nodes.forEach(n=>io.observe(n));
+  // safety net: never leave content hidden
+  setTimeout(()=>nodes.forEach(n=>n.classList.add('in')), 1500);
 }
 
 /* ----------  generic modal  ---------- */
-let _modalPitch=null;
-function closeModal(){ const ov=$('#modalOverlay'); if(ov) ov.classList.remove('open'); if(_modalPitch){ _modalPitch.destroy(); _modalPitch=null; } }
+function closeModal(){ const ov=$('#modalOverlay'); if(ov) ov.classList.remove('open'); }
 function showModal(html){
-  if(_modalPitch){ _modalPitch.destroy(); _modalPitch=null; }
   let ov=$('#modalOverlay');
   if(!ov){ ov=el('div','modal-overlay'); ov.id='modalOverlay'; document.body.appendChild(ov);
     ov.addEventListener('click',e=>{ if(e.target===ov) closeModal(); }); }
@@ -541,18 +603,21 @@ function showModal(html){
   ov.classList.add('open');
 }
 
-/* lazy-load the pitch module on demand (so non-live pages don't ship it eagerly) */
-function ensurePitch(){
-  if(window.createPitch) return Promise.resolve();
-  return new Promise((res)=>{ const s=document.createElement('script'); s.src='js/pitch.js'; s.onload=()=>res(); s.onerror=()=>res(); document.head.appendChild(s); });
+/* lazy-load the shared news module on demand (so non-news pages don't ship it eagerly) */
+function ensureNews(){
+  if(window.NewsFeed) return Promise.resolve();
+  return new Promise((res)=>{ const s=document.createElement('script'); s.src='js/news.js'; s.onload=()=>res(); s.onerror=()=>res(); document.head.appendChild(s); });
 }
 
 /* ----------  PWA: manifest, theme color, service worker  ---------- */
 function initPWA(){
   if(!document.querySelector('link[rel="manifest"]')){
     const l=document.createElement('link'); l.rel='manifest'; l.href='manifest.webmanifest'; document.head.appendChild(l);
-    const m=document.createElement('meta'); m.name='theme-color'; m.content='#00c46a'; document.head.appendChild(m);
+    const m=document.createElement('meta'); m.name='theme-color'; m.content='#9b3cff'; document.head.appendChild(m);
   }
+  // bespoke emblem favicon
+  const fav=document.querySelector('link[rel="icon"]');
+  if(fav) fav.href='data:image/svg+xml,'+encodeURIComponent(BRAND_SVG.replace(' class="emblem"',''));
   // SW only works over http(s)/localhost (not file://)
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){
     navigator.serviceWorker.register('sw.js').then(async reg=>{
@@ -568,6 +633,7 @@ function syncSWState(){
 }
 
 /* ----------  boot  ---------- */
+Prefs.apply();                                              // set theme/motion class ASAP (no flash)
 if(typeof LiveData!=='undefined') LiveData.applyStatus();   // set real status before pages render
 document.addEventListener('DOMContentLoaded', ()=>{
   initPWA();
