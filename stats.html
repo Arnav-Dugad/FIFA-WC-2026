@@ -25,14 +25,17 @@
   <div class="wrap grid reveal" id="pulse" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"></div>
 </section>
 
-<!-- LEADERBOARDS -->
+<!-- AWARDS: Player of the Tournament + Golden Boot -->
 <section class="section-tight">
   <div class="wrap">
-    <div class="section-head reveal"><div><div class="eyebrow">The races</div><h2 class="display">Golden Boot &amp; <span class="display">Leaders</span></h2></div></div>
-    <div class="grid reveal" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
-      <div class="card" style="padding:20px"><h3 class="display" style="margin-bottom:14px">🥇 Golden Boot — Goals</h3><div id="lbGoals"></div></div>
-      <div class="card" style="padding:20px"><h3 class="display" style="margin-bottom:14px">🎯 Top Assists</h3><div id="lbAssists"></div></div>
-      <div class="card" style="padding:20px"><h3 class="display" style="margin-bottom:14px">⭐ Best Form Rating</h3><div id="lbRating"></div></div>
+    <div class="section-head reveal"><div><div class="eyebrow">The races</div><h2 class="display">Golden Ball &amp; <span class="display">Golden Boot</span></h2></div></div>
+    <div class="grid reveal" style="grid-template-columns:1fr 1fr;gap:18px" id="awardsGrid">
+      <div class="card" style="padding:0;overflow:hidden" id="pottCard"></div>
+      <div class="card" style="padding:20px">
+        <h3 class="display" style="margin-bottom:4px">👟 Golden Boot</h3>
+        <p class="muted" style="font-size:.8rem;margin-bottom:12px">Top scorers — updated live from match results.</p>
+        <div id="lbGoals"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -67,20 +70,34 @@
       <span class="muted" style="font-size:.78rem;text-transform:uppercase;letter-spacing:1px">${l}</span></div>`).join('');
   }
 
-  /* leaderboards */
-  function lbRow(rank,p,val,unit){
-    const t=team(p.team);
+  /* awards: Player of the Tournament + Golden Boot (real goals from feed) */
+  function lbRowN(rank,name,t,valTxt){
     return `<div class="lineup-row"><span class="ln" style="color:var(--gold);font-weight:700">${rank}</span>
-      <div class="avatar" style="${avatarStyle(t)};width:30px;height:30px;font-size:.8rem;border-width:2px">${initials(p.name)}</div>
-      <div><b style="font-size:.9rem">${p.name}</b><div class="muted" style="font-size:.72rem">${t.name}</div></div>
-      <b style="margin-left:auto;font-family:Oswald;color:var(--green);font-size:1.1rem">${val}<small style="color:var(--muted);font-size:.62rem;font-weight:400"> ${unit}</small></b></div>`;
+      <div class="avatar" style="${avatarStyle(t)};width:30px;height:30px;font-size:.78rem;border-width:2px">${initials(name)}</div>
+      <div><b style="font-size:.9rem">${name}</b><div class="muted" style="font-size:.72rem">${t.name}</div></div>
+      <b style="margin-left:auto;font-family:Oswald;color:var(--green);font-size:1.05rem">${valTxt}</b></div>`;
   }
-  const byGoals=[...PLAYERS].sort((a,b)=>b.goals-a.goals||b.rating-a.rating).slice(0,6);
-  const byAssist=[...PLAYERS].sort((a,b)=>b.assists-a.assists||b.rating-a.rating).slice(0,6);
-  const byRating=[...PLAYERS].sort((a,b)=>b.rating-a.rating).slice(0,6);
-  $('#lbGoals').innerHTML=byGoals.map((p,i)=>lbRow(i+1,p,p.goals,'gls')).join('');
-  $('#lbAssists').innerHTML=byAssist.map((p,i)=>lbRow(i+1,p,p.assists,'ast')).join('');
-  $('#lbRating').innerHTML=byRating.map((p,i)=>lbRow(i+1,p,p.rating,'/10')).join('');
+  function renderAwards(){
+    const race=pottRace(), leader=race[0]; if(!leader) return;
+    const t=team(leader.code);
+    $('#pottCard').innerHTML=`
+      <div style="background:linear-gradient(140deg,${t.c1},${t.c2});padding:22px;display:flex;align-items:center;gap:16px">
+        <div class="avatar" id="pottAv" style="${avatarStyle(t)};width:84px;height:84px;font-size:1.7rem;border-width:3px">${initials(leader.name)}</div>
+        <div><div style="font-size:.7rem;font-weight:800;letter-spacing:1.5px;color:rgba(255,255,255,.9)">🏆 PLAYER OF THE TOURNAMENT</div>
+          <div class="display" style="font-size:1.5rem;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.35)">${leader.name}</div>
+          <div style="color:rgba(255,255,255,.92);font-size:.85rem;margin-top:2px"><img src="${flag(t.cc)}" style="width:20px;height:13px;border-radius:2px;display:inline;vertical-align:middle"> ${t.name} · ${leader.goals?`${leader.goals} goal${leader.goals===1?'':'s'}`:'pre-tournament favourite'}</div></div>
+      </div>
+      <div style="padding:14px 18px">
+        <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Race standings</div>
+        ${race.slice(0,6).map((s,i)=>{const tt=team(s.code);return `<div class="lineup-row"><span class="ln" style="color:var(--gold)">${i+1}</span><img class="flag-sm" src="${flag(tt.cc)}"><b style="font-size:.86rem">${s.name}</b><span class="muted" style="margin-left:auto;font-size:.8rem">${s.goals?`${s.goals} ⚽`:(s.fav?'one to watch':'—')}</span></div>`;}).join('')}
+      </div>`;
+    loadPlayerPhoto($('#pottAv'), leader.name);
+    const sc=topScorers();
+    $('#lbGoals').innerHTML = sc.length
+      ? sc.slice(0,8).map((s,i)=>lbRowN(i+1,s.name,team(s.code),s.goals+' ⚽')).join('')
+      : '<p class="muted" style="font-size:.85rem;margin-bottom:10px">No goals scored yet — the race begins at kick-off. Ones to watch:</p>'+
+        [...PLAYERS].filter(p=>p.pos==='FW').sort((a,b)=>b.rating-a.rating).slice(0,5).map((p,i)=>lbRowN(i+1,p.name,team(p.team),'★ '+p.rating)).join('');
+  }
 
   /* standings (reuse component) */
   function renderStandings(){
@@ -98,7 +115,7 @@
     });
   }
 
-  function renderStatsPage(){ renderPulse(); renderStandings(); }
+  function renderStatsPage(){ renderPulse(); renderAwards(); renderStandings(); }
   LiveData.refresh(renderStatsPage);
   setInterval(()=>LiveData.refresh(renderStatsPage), 60000);
 </script>
