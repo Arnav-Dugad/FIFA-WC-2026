@@ -492,6 +492,7 @@ img{max-width:100%;display:block}
   .section-head h2{font-size:1.5rem}
   .round-col{flex-basis:84vw;min-width:84vw}
 }
+@media(max-width:760px){ #awardsGrid{grid-template-columns:1fr !important} }
 /* nicer focus + tap highlight */
 a,button,input{-webkit-tap-highlight-color:rgba(155,60,255,.25)}
 :focus-visible{outline:2px solid var(--purple);outline-offset:2px}
@@ -499,10 +500,11 @@ a,button,input{-webkit-tap-highlight-color:rgba(155,60,255,.25)}
 
 /* ============ LIGHT THEME ============ */
 html.light{
-  --bg:#eceef6; --bg-2:#e3e6f2; --surface:#ffffff; --surface-2:#f2f3fb;
-  --card:rgba(18,20,45,.04); --card-border:rgba(20,30,80,.14);
-  --text:#161726; --muted:#5a6178; --faint:#8b91aa;
-  --shadow:0 18px 44px -22px rgba(40,30,90,.25);
+  --bg:#eef0f7; --bg-2:#e6e9f3; --surface:#ffffff; --surface-2:#f4f5fc;
+  --card:#ffffff; --card-border:rgba(22,30,75,.13);
+  --text:#13141f; --muted:#5b6178; --faint:#9298b0;
+  --shadow:0 18px 44px -22px rgba(40,30,90,.22);
+  --shadow-glow:0 0 40px -10px rgba(155,60,255,.28);
 }
 html.light body{
   background:
@@ -511,12 +513,27 @@ html.light body{
     radial-gradient(900px 600px at 50% 120%, rgba(0,170,160,.08), transparent 60%),
     var(--bg);
 }
-html.light .site-header{background:rgba(255,255,255,.85)}
+html.light .site-header{background:rgba(255,255,255,.88)}
 html.light .nav-links a{color:#454b69}
 html.light .nav-links a:hover{background:rgba(20,30,80,.06)}
+html.light .nav-links a.active{color:var(--text)}
 html.light .tz-badge,html.light .icon-btn,html.light .notif-bell,html.light .burger{background:#fff}
-html.light .search-input,html.light .chip,html.light .tab,html.light .stepper button{background:#fff}
-html.light .modal-close{background:rgba(0,0,0,.35)}
+html.light .search-input,html.light select.search-input,html.light .stepper button{background:#fff}
+html.light .chip{background:#fff}
+html.light .modal-close{background:rgba(0,0,0,.4);color:#fff}
+/* surfaces that were tuned for a dark canvas */
+html.light .hero-card{background:#fff}
+html.light .pred-hero{background:linear-gradient(135deg,rgba(255,45,120,.10),rgba(58,123,255,.08))}
+html.light .card:hover{box-shadow:0 16px 40px -22px rgba(40,30,90,.3)}
+html.light .btn-ghost:hover{background:rgba(20,30,80,.05)}
+/* bars/tracks that used translucent white become invisible on light → darken */
+html.light .sr-bar,html.light .pitch,html.light .xp-bar,html.light .poss-bar{background:rgba(20,30,70,.12)}
+html.light .lineup-row,html.light .standings td,html.light .board td,html.light .md-news{border-color:rgba(22,30,75,.1)}
+html.light .scroll-x::-webkit-scrollbar-thumb,html.light ::-webkit-scrollbar-thumb{background:rgba(20,30,70,.18)}
+html.light ::-webkit-scrollbar-track{background:var(--bg-2)}
+/* live scoreboard stays a dark "stadium" panel for contrast */
+html.light .lsb-team h3,html.light .lsb-score{color:#fff}
+html.light .to-top{background:rgba(255,255,255,.92);color:var(--text)}
 
 /* ============ REDUCED MOTION ============ */
 html.reduce-motion *,html.reduce-motion *::before,html.reduce-motion *::after{
