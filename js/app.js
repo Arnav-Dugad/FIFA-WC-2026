@@ -151,6 +151,33 @@ function computeStandings(groupLetter){
   return Object.values(row).sort((x,y)=> y.Pts-x.Pts || (y.GF-y.GA)-(x.GF-x.GA) || y.GF-x.GF || team(x.code).rank-team(y.code).rank);
 }
 
+/* ----------  REAL top-scorer tally (Golden Boot) from feed goal data  ---------- */
+function cleanGoalName(n){ return (n||'').replace(/\(.*?\)/g,'').replace(/\s+\d+'?$/,'').trim(); }
+function topScorers(){
+  const tally={};
+  MATCHES.filter(m=>m.home&&m.away&&m.scorers).forEach(m=>{
+    const add=(g,code)=>{ if(g&&g.owngoal) return; const name=cleanGoalName(g.name); if(!name) return;
+      const k=name+'|'+code; (tally[k] ||= {name, code, goals:0}).goals++; };
+    (m.scorers.home||[]).forEach(g=>add(g,m.home));
+    (m.scorers.away||[]).forEach(g=>add(g,m.away));
+  });
+  return Object.values(tally).sort((a,b)=> b.goals-a.goals || team(a.code).rank-team(b.code).rank);
+}
+/* Player-of-the-Tournament race: real goals first, curated form rating as tiebreaker */
+function pottRace(){
+  const scorers=topScorers();
+  const byName={}; PLAYERS.forEach(p=>byName[p.name.toLowerCase()]=p);
+  scorers.forEach(s=>{ const p=byName[s.name.toLowerCase()]; s.rating=p?p.rating:7.5; s.score=s.goals*100 + (s.rating-7)*10; });
+  // if very few goals so far, blend in pre-tournament favourites so the race isn't empty
+  if(scorers.length<3){
+    const favs=[...PLAYERS].filter(p=>p.pos==='FW'||p.hot).sort((a,b)=>b.rating-a.rating).slice(0,8)
+      .filter(p=>!scorers.some(s=>s.name.toLowerCase()===p.name.toLowerCase()))
+      .map(p=>({name:p.name, code:p.team, goals:0, rating:p.rating, score:(p.rating-7)*10, fav:true}));
+    return scorers.concat(favs).sort((a,b)=>b.score-a.score);
+  }
+  return scorers.sort((a,b)=>b.score-a.score);
+}
+
 /* ----------  THIRD-PLACE RANKING & KNOCKOUT BRACKET PROJECTION  ----------
    Implements the official 2026 R32 slot structure. Group winners/runners-up
    resolve as each group completes; the eight best third-placed teams are
