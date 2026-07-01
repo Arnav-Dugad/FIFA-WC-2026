@@ -7,10 +7,17 @@
 <meta name="description" content="The icons, goal machines and wonderkids of World Cup 2026 — profiles, positions and form ratings.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://arnav-dugad.github.io/FIFA-WC-2026/players.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="World Cup 2026 Hub">
+<meta property="og:title" content="Players — World Cup 2026"><meta property="og:description" content="Star players across all 48 nations — positions, form and profiles.">
+<meta property="og:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
+<meta property="og:url" content="https://arnav-dugad.github.io/FIFA-WC-2026/players.html">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
 </head>
 <body data-page="players.html">
+<noscript><div class="ns">This hub needs JavaScript for live scores &amp; interactivity. Browse: <a href="index.html">Home</a> · <a href="fixtures.html">Fixtures</a> · <a href="bracket.html">Bracket</a> · <a href="teams.html">Teams</a> · <a href="players.html">Players</a> · <a href="stats.html">Stats</a> · <a href="stadiums.html">Stadiums</a> · <a href="news.html">News</a> · <a href="predictor.html">Predictor</a> · <a href="live.html">Live</a></div></noscript>
 
 <section class="page-hero">
   <div class="wrap">
@@ -73,7 +80,7 @@
           <div class="ps"><b>${p.rating}</b><span>Rating</span></div>
         </div>
       </div>`;
-    c.onclick=()=>playerModal(p);
+    a11yClick(c, ()=>playerModal(p), `View ${p.name} profile`);
     const av=c.querySelector('.avatar'); av.dataset.player=p.name; photoObserver.observe(av);
     return c;
   }

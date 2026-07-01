@@ -7,10 +7,17 @@
 <meta name="description" content="Live World Cup 2026 group standings, top scorers, assists, form ratings and tournament leaderboards.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://arnav-dugad.github.io/FIFA-WC-2026/stats.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="World Cup 2026 Hub">
+<meta property="og:title" content="Stats — World Cup 2026"><meta property="og:description" content="Live standings, Golden Boot top scorers and the Player of the Tournament race.">
+<meta property="og:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
+<meta property="og:url" content="https://arnav-dugad.github.io/FIFA-WC-2026/stats.html">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
 </head>
 <body data-page="stats.html">
+<noscript><div class="ns">This hub needs JavaScript for live scores &amp; interactivity. Browse: <a href="index.html">Home</a> · <a href="fixtures.html">Fixtures</a> · <a href="bracket.html">Bracket</a> · <a href="teams.html">Teams</a> · <a href="players.html">Players</a> · <a href="stats.html">Stats</a> · <a href="stadiums.html">Stadiums</a> · <a href="news.html">News</a> · <a href="predictor.html">Predictor</a> · <a href="live.html">Live</a></div></noscript>
 
 <section class="page-hero">
   <div class="wrap">
@@ -107,10 +114,10 @@
       const card=el('div','card group-card');
       const rows=table.map((r,i)=>{const t=team(r.code);
         return `<tr class="${i<2?'qual':''}"><td class="tname"><span class="tname"><img src="${flag(t.cc)}"> ${t.name}</span></td>
-        <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td><td>${r.GF-r.GA>0?'+':''}${r.GF-r.GA}</td><td class="pts">${r.Pts}</td></tr>`;}).join('');
+        <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td><td>${r.GF-r.GA>0?'+':''}${r.GF-r.GA}</td><td class="pts">${r.Pts}</td><td class="form-col">${formDots(r.code)}</td></tr>`;}).join('');
       card.innerHTML=`<div class="group-head"><span class="gl">${g}</span><h3 class="display">Group ${g}</h3></div>
-        <table class="standings"><thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
-        <tbody>${rows}</tbody></table>`;
+        <div class="tbl-wrap"><table class="standings"><thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th><th class="form-col">Form</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
       st.appendChild(card);
     });
   }

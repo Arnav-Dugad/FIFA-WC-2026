@@ -8,10 +8,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://flagcdn.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://arnav-dugad.github.io/FIFA-WC-2026/index.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="World Cup 2026 Hub">
+<meta property="og:title" content="World Cup 2026 Hub — Live Scores, Fixtures, Bracket & Predictor">
+<meta property="og:description" content="Your free home for FIFA World Cup 2026: live scores, fixtures, teams, players, stats, stadiums, knockout bracket, a predictor game and news — all in your local time.">
+<meta property="og:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
+<meta property="og:url" content="https://arnav-dugad.github.io/FIFA-WC-2026/index.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="World Cup 2026 Hub">
+<meta name="twitter:description" content="Live scores, fixtures, bracket, predictor & news for the FIFA World Cup 2026.">
+<meta name="twitter:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
 </head>
 <body data-page="index.html">
+<noscript><div class="ns">This hub needs JavaScript for live scores &amp; interactivity. Browse: <a href="index.html">Home</a> · <a href="fixtures.html">Fixtures</a> · <a href="bracket.html">Bracket</a> · <a href="teams.html">Teams</a> · <a href="players.html">Players</a> · <a href="stats.html">Stats</a> · <a href="stadiums.html">Stadiums</a> · <a href="news.html">News</a> · <a href="predictor.html">Predictor</a> · <a href="live.html">Live</a></div></noscript>
 
 <!-- HERO -->
 <section class="hero">
@@ -235,7 +246,7 @@
   NewsFeed.load().then(items=>{
     const hn=$('#homeNews');
     if(!items || !items.length){ $('#homeNewsState').textContent=''; homeNewsFallback(); return; }
-    $('#homeNewsState').innerHTML='· <span style="color:var(--green)">●</span> live';
+    $('#homeNewsState').innerHTML = NewsFeed.live ? '· <span style="color:var(--green)">●</span> live' : '· saved';
     hn.innerHTML='';
     items.slice(0,5).forEach((n,i)=>{
       const c=el('div','card news-card'+(i===0?' news-feature':''));
@@ -244,7 +255,7 @@
         <div class="news-body"><div class="date">${n.date?localDate(n.date,{month:'short',day:'numeric'}):''} <span class="muted">· ${timeAgo(n.date)}</span></div>
         <h3>${n.title}</h3><p class="blurb">${n.blurb||''}</p><span class="link-more">Read full story ↗</span></div>`;
       const im=c.querySelector('.news-img img'); im.onerror=()=>{ im.onerror=null; im.src=cityImg(n.title,'World Cup 2026'); };
-      c.onclick=()=>window.open(n.link,'_blank','noopener');
+      a11yClick(c, ()=>window.open(n.link,'_blank','noopener'), `Read: ${n.title}`);
       hn.appendChild(c);
     });
   }).catch(homeNewsFallback);

@@ -7,6 +7,12 @@
 <meta name="description" content="Premium real-time World Cup 2026 match center: live scores & clock, in-play win probability, venue weather, line-ups and a multi-match ticker.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://arnav-dugad.github.io/FIFA-WC-2026/live.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="World Cup 2026 Hub">
+<meta property="og:title" content="Live Match Center — World Cup 2026"><meta property="og:description" content="Real-time scores, clock, win probability, venue weather and line-ups.">
+<meta property="og:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
+<meta property="og:url" content="https://arnav-dugad.github.io/FIFA-WC-2026/live.html">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
 <style>
@@ -26,6 +32,7 @@
 </style>
 </head>
 <body data-page="live.html">
+<noscript><div class="ns">This hub needs JavaScript for live scores &amp; interactivity. Browse: <a href="index.html">Home</a> · <a href="fixtures.html">Fixtures</a> · <a href="bracket.html">Bracket</a> · <a href="teams.html">Teams</a> · <a href="players.html">Players</a> · <a href="stats.html">Stats</a> · <a href="stadiums.html">Stadiums</a> · <a href="news.html">News</a> · <a href="predictor.html">Predictor</a> · <a href="live.html">Live</a></div></noscript>
 
 <section class="page-hero">
   <div class="wrap">
@@ -122,7 +129,7 @@ function renderScoreboard(){
   let centre,sub;
   if(c.state==='upcoming'){ centre=`<span style="font-size:1.7rem">${localTime(m.kickoff)}</span>`; sub=relativeKO(m.kickoff).toUpperCase(); }
   else if(c.state==='live'){ centre=hasScore?`${m.hs}<span style="opacity:.4">:</span>${m.as}`:'<span style="font-size:1.6rem;opacity:.7">LIVE</span>'; sub='● '+c.label; }
-  else { centre=hasScore?`${m.hs}<span style="opacity:.4">:</span>${m.as}`:'<span style="font-size:1.3rem;opacity:.6">FULL&nbsp;TIME</span>'; sub='FULL TIME'; }
+  else { centre=hasScore?`${m.hs}<span style="opacity:.4">:</span>${m.as}`:'<span style="font-size:1.1rem;opacity:.6">RESULT&nbsp;PENDING</span>'; sub=hasScore?'FULL TIME':'awaiting result'; }
   $('#scoreboard').innerHTML=`
     <div class="lsb-top">
       <span class="match-stage">${m.stage} · ${st.name}</span>

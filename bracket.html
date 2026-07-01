@@ -7,6 +7,12 @@
 <meta name="description" content="The World Cup 2026 knockout bracket with live third-place projection and the path to the MetLife final — in your local time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://arnav-dugad.github.io/FIFA-WC-2026/bracket.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="World Cup 2026 Hub">
+<meta property="og:title" content="Knockout Bracket — World Cup 2026"><meta property="og:description" content="The Round of 32 to the Final at MetLife, with live third-place projection.">
+<meta property="og:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
+<meta property="og:url" content="https://arnav-dugad.github.io/FIFA-WC-2026/bracket.html">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
 <style>
@@ -41,6 +47,7 @@
 </style>
 </head>
 <body data-page="bracket.html">
+<noscript><div class="ns">This hub needs JavaScript for live scores &amp; interactivity. Browse: <a href="index.html">Home</a> · <a href="fixtures.html">Fixtures</a> · <a href="bracket.html">Bracket</a> · <a href="teams.html">Teams</a> · <a href="players.html">Players</a> · <a href="stats.html">Stats</a> · <a href="stadiums.html">Stadiums</a> · <a href="news.html">News</a> · <a href="predictor.html">Predictor</a> · <a href="live.html">Live</a></div></noscript>
 
 <section class="page-hero">
   <div class="wrap">
@@ -75,6 +82,7 @@
 <section class="section-tight">
   <div class="wrap">
     <div class="section-head reveal"><div><div class="eyebrow">8 of 12 advance</div><h2 class="display">Best <span class="display">Third-Placed</span> Teams</h2></div></div>
+    <div id="thirdNote" class="reveal" style="margin-bottom:8px"></div>
     <div class="card reveal" style="padding:6px 10px;overflow-x:auto">
       <table class="third-table" id="thirdTable"></table>
     </div>
@@ -126,7 +134,7 @@
         ${hasScore&&code?`<span class="sc">${which==='home'?m.hs:m.as}</span>`:''}</div>`; };
     card.innerHTML=`<div class="ko-meta"><span>🗓️ ${localDate(m.kickoff,{month:'short',day:'numeric'})} · ${localTime(m.kickoff)}</span><span>📍 ${st.city}</span></div>
       ${side(m.home,m.homeLabel,'home')}<div class="ko-vs"></div>${side(m.away,m.awayLabel,'away')}`;
-    card.onclick=()=>matchDetail(m);
+    a11yClick(card, ()=>matchDetail(m), `${m.stage} match details`);
     return card;
   }
 
@@ -141,8 +149,9 @@
     const qg=$('#qualGrid'); qg.innerHTML='';
     GROUPS.forEach(g=>{
       const t=computeStandings(g); const w=team(t[0].code), r=team(t[1].code);
-      const cell=el('div','qual-cell');
-      cell.innerHTML=`<div class="gl">GROUP ${g}</div>
+      const started=groupStarted(g);
+      const cell=el('div','qual-cell'); if(!started) cell.style.opacity='.7';
+      cell.innerHTML=`<div class="gl">GROUP ${g} ${started?'':'<span style="color:var(--muted);font-weight:600">· projected</span>'}</div>
         <div class="ko-team" style="padding:3px 0;font-size:.85rem"><span style="color:var(--green)">●</span> <img src="${flag(w.cc)}"> ${w.name}</div>
         <div class="ko-team" style="padding:3px 0;font-size:.85rem"><span style="color:var(--gold)">●</span> <img src="${flag(r.cc)}"> ${r.name}</div>`;
       qg.appendChild(cell);
@@ -150,6 +159,8 @@
   }
 
   function renderThirds(){
+    const started=anyGroupResults();
+    const note=$('#thirdNote'); if(note) note.innerHTML = started ? '' : '<span class="pill pill-gold" style="margin-bottom:6px;display:inline-block">Not started — projected by FIFA seeding</span>';
     const all=GROUPS.map(g=>{ const s=computeStandings(g)[2]; return {g, code:s.code, Pts:s.Pts, GD:s.GF-s.GA, GF:s.GF}; })
       .sort((a,b)=>b.Pts-a.Pts||b.GD-a.GD||b.GF-a.GF||team(a.code).rank-team(b.code).rank);
     const t=$('#thirdTable');

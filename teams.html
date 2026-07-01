@@ -7,10 +7,17 @@
 <meta name="description" content="All 48 World Cup 2026 nations, the 12 groups, live standings, flags and squad info.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://arnav-dugad.github.io/FIFA-WC-2026/teams.html">
+<meta property="og:type" content="website"><meta property="og:site_name" content="World Cup 2026 Hub">
+<meta property="og:title" content="Teams & Groups — World Cup 2026"><meta property="og:description" content="All 48 nations, 12 groups, live standings and team profiles.">
+<meta property="og:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
+<meta property="og:url" content="https://arnav-dugad.github.io/FIFA-WC-2026/teams.html">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://arnav-dugad.github.io/FIFA-WC-2026/og.png">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
 </head>
 <body data-page="teams.html">
+<noscript><div class="ns">This hub needs JavaScript for live scores &amp; interactivity. Browse: <a href="index.html">Home</a> · <a href="fixtures.html">Fixtures</a> · <a href="bracket.html">Bracket</a> · <a href="teams.html">Teams</a> · <a href="players.html">Players</a> · <a href="stats.html">Stats</a> · <a href="stadiums.html">Stadiums</a> · <a href="news.html">News</a> · <a href="predictor.html">Predictor</a> · <a href="live.html">Live</a></div></noscript>
 
 <section class="page-hero">
   <div class="wrap">
@@ -56,14 +63,14 @@
         return `<tr class="${i<2?'qual':''}">
           <td class="tname"><span class="tname"><img src="${flag(t.cc)}" alt=""> ${t.name}</span></td>
           <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td>
-          <td>${r.GF}:${r.GA}</td><td class="pts">${r.Pts}</td></tr>`;
+          <td>${r.GF}:${r.GA}</td><td class="pts">${r.Pts}</td><td class="form-col">${formDots(r.code)}</td></tr>`;
       }).join('');
       card.innerHTML = `
         <div class="group-head"><span class="gl">${g}</span><h3 class="display">Group ${g}</h3></div>
-        <table class="standings">
-          <thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF:GA</th><th>Pts</th></tr></thead>
+        <div class="tbl-wrap"><table class="standings">
+          <thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF:GA</th><th>Pts</th><th class="form-col">Form</th></tr></thead>
           <tbody>${rows}</tbody>
-        </table>
+        </table></div>
         <div style="padding:10px 16px;font-size:.72rem;color:var(--muted);border-top:1px solid var(--card-border)">
           <span style="color:var(--green)">▌</span> Qualification places (top 2 advance)</div>`;
       gv.appendChild(card);
@@ -80,7 +87,7 @@
       <img class="flag" src="${flag(t.cc)}" alt="${t.name}" loading="lazy">
       <h4>${t.name}</h4><div class="meta">${t.conf}${t.host?' · Host':''}</div>`;
     c.querySelector('.fav-btn').onclick = (e)=>{ e.stopPropagation(); const on=toggleFav(t.code); const b=e.currentTarget; b.classList.toggle('on',on); b.textContent=on?'★':'☆'; };
-    c.onclick = ()=> teamModal(t);
+    a11yClick(c, ()=>teamModal(t), `View ${t.name} team profile`);
     return c;
   }
   function renderAll(filter){

@@ -8,11 +8,12 @@
    run from file://. Serve the folder (e.g. `python -m http.server`) to
    unlock offline + background features.
    ===================================================================== */
-const CACHE = 'wc2026-v3';
+const CACHE = 'wc2026-v4';
 const SHELL = [
   './','index.html','fixtures.html','bracket.html','teams.html','players.html',
-  'stats.html','stadiums.html','news.html','live.html',
-  'css/styles.css','js/data.js','js/live-data.js','js/app.js','manifest.webmanifest'
+  'stats.html','stadiums.html','news.html','live.html','predictor.html',
+  'css/styles.css','js/data.js','js/live-data.js','js/app.js','js/news.js','js/predictor.js',
+  'manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', e => {
@@ -32,13 +33,18 @@ self.addEventListener('fetch', e => {
                       .catch(() => caches.match(e.request))
     );
   } else {
-    // app shell: cache-first
-    e.respondWith(caches.match(e.request).then(c => c || fetch(e.request)));
+    // app shell: network-first so new deploys load immediately (no hard refresh);
+    // fall back to cache when offline, and to index.html for navigations.
+    e.respondWith(
+      fetch(e.request).then(r => { const cp = r.clone(); caches.open(CACHE).then(c => c.put(e.request, cp)); return r; })
+                      .catch(() => caches.match(e.request).then(c => c || (e.request.mode === 'navigate' ? caches.match('index.html') : undefined)))
+    );
   }
 });
 
 /* Page can hand the SW the schedule + followed teams so it can alert in the background */
 self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'skip-waiting') { self.skipWaiting(); return; }
   if (e.data && e.data.type === 'state') {
     caches.open(CACHE).then(c => c.put('/_state', new Response(JSON.stringify(e.data.payload))));
   }
