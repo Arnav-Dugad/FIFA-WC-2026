@@ -15,14 +15,14 @@ const STADIUMS = [
   { id:'bcplace',  name:'BC Place',                city:'Vancouver',       country:'Canada',  cc:'ca', cap:54500, lat:49.2768,  lng:-123.1119,opened:1983, roof:true,  wiki:'BC_Place',                note:'Retractable roof on the Pacific waterfront' },
   { id:'mercedes', name:'Mercedes-Benz Stadium',   city:'Atlanta',         country:'USA',     cc:'us', cap:71000, lat:33.7553,  lng:-84.4006, opened:2017, roof:true,  wiki:'Mercedes-Benz_Stadium',   note:'Iconic pinwheel retractable roof • hosts a semi-final' },
   { id:'gillette', name:'Gillette Stadium',        city:'Boston',          country:'USA',     cc:'us', cap:65878, lat:42.0909,  lng:-71.2643, opened:2002, roof:false, wiki:'Gillette_Stadium',        note:'Foxborough, Massachusetts' },
-  { id:'att',      name:'AT&T Stadium',            city:'Dallas',          country:'USA',     cc:'us', cap:80000, lat:32.7473,  lng:-97.0945, opened:2009, roof:true,  wiki:'AT%26T_Stadium',          note:'"Jerry World" • hosts a semi-final' },
+  { id:'att',      name:'AT&T Stadium',            city:'Dallas',          country:'USA',     cc:'us', cap:80000, lat:32.7473,  lng:-97.0945, opened:2009, roof:true,  wiki:'AT&T_Stadium',            note:'"Jerry World" • hosts a semi-final' },
   { id:'nrg',      name:'NRG Stadium',             city:'Houston',         country:'USA',     cc:'us', cap:72220, lat:29.6847,  lng:-95.4107, opened:2002, roof:true,  wiki:'NRG_Stadium',             note:'Retractable roof, Texas heat tamed' },
   { id:'arrowhead',name:'Arrowhead Stadium',       city:'Kansas City',     country:'USA',     cc:'us', cap:76416, lat:39.0489,  lng:-94.4839, opened:1972, roof:false, wiki:'Arrowhead_Stadium',       note:'One of the loudest stadiums on earth' },
   { id:'sofi',     name:'SoFi Stadium',            city:'Los Angeles',     country:'USA',     cc:'us', cap:70240, lat:33.9535,  lng:-118.3392,opened:2020, roof:true,  wiki:'SoFi_Stadium',            note:'$5bn architectural marvel in Inglewood' },
   { id:'hardrock', name:'Hard Rock Stadium',       city:'Miami',           country:'USA',     cc:'us', cap:65326, lat:25.9580,  lng:-80.2389, opened:1987, roof:false, wiki:'Hard_Rock_Stadium',       note:'Canopy-shaded fortress • hosts the third-place match' },
   { id:'metlife',  name:'MetLife Stadium',         city:'New York / NJ',   country:'USA',     cc:'us', cap:82500, lat:40.8128,  lng:-74.0742, opened:2010, roof:false, wiki:'MetLife_Stadium',         note:'★ FINAL VENUE — July 19, 2026' },
   { id:'lincoln',  name:'Lincoln Financial Field', city:'Philadelphia',    country:'USA',     cc:'us', cap:69596, lat:39.9008,  lng:-75.1675, opened:2003, roof:false, wiki:'Lincoln_Financial_Field', note:'"The Linc" in the heart of the city' },
-  { id:'levis',    name:"Levi's Stadium",          city:'San Francisco',   country:'USA',     cc:'us', cap:68500, lat:37.4030,  lng:-121.9700,opened:2014, roof:false, wiki:"Levi%27s_Stadium",        note:'Santa Clara, Silicon Valley showpiece' },
+  { id:'levis',    name:"Levi's Stadium",          city:'San Francisco',   country:'USA',     cc:'us', cap:68500, lat:37.4030,  lng:-121.9700,opened:2014, roof:false, wiki:"Levi's_Stadium",          note:'Santa Clara, Silicon Valley showpiece' },
   { id:'lumen',    name:'Lumen Field',             city:'Seattle',         country:'USA',     cc:'us', cap:68740, lat:47.5952,  lng:-122.3316,opened:2002, roof:false, wiki:'Lumen_Field',             note:'Pacific Northwest cauldron of noise' },
 ];
 
@@ -47,12 +47,12 @@ const TEAMS = [
   { code:'USA', name:'United States',     cc:'us',     group:'D', rank:16, conf:'CONCACAF', c1:'#1c2b56', c2:'#b22234', host:true },
   { code:'PAR', name:'Paraguay',          cc:'py',     group:'D', rank:41, conf:'CONMEBOL', c1:'#d52b1e', c2:'#0038a8' },
   { code:'AUS', name:'Australia',         cc:'au',     group:'D', rank:26, conf:'AFC',      c1:'#00843d', c2:'#ffcd00' },
-  { code:'TUR', name:'Türkiye',           cc:'tr',     group:'D', rank:27, conf:'UEFA',     c1:'#e30a17', c2:'#ffffff' },
+  { code:'TUR', name:'Türkiye',           cc:'tr',     group:'D', rank:28, conf:'UEFA',     c1:'#e30a17', c2:'#ffffff' },
   // GROUP E
   { code:'GER', name:'Germany',           cc:'de',     group:'E', rank:12, conf:'UEFA',     c1:'#000000', c2:'#dd0000' },
   { code:'CUW', name:'Curaçao',           cc:'cw',     group:'E', rank:82, conf:'CONCACAF', c1:'#002b7f', c2:'#f9d616' },
   { code:'CIV', name:"Côte d'Ivoire",     cc:'ci',     group:'E', rank:42, conf:'CAF',      c1:'#f77f00', c2:'#009e60' },
-  { code:'ECU', name:'Ecuador',           cc:'ec',     group:'E', rank:23, conf:'CONMEBOL', c1:'#ffd100', c2:'#0033a0' },
+  { code:'ECU', name:'Ecuador',           cc:'ec',     group:'E', rank:22, conf:'CONMEBOL', c1:'#ffd100', c2:'#0033a0' },
   // GROUP F
   { code:'NED', name:'Netherlands',       cc:'nl',     group:'F', rank:7,  conf:'UEFA',     c1:'#f36c21', c2:'#21468b' },
   { code:'JPN', name:'Japan',             cc:'jp',     group:'F', rank:18, conf:'AFC',      c1:'#0033a0', c2:'#bc002d' },
@@ -67,7 +67,7 @@ const TEAMS = [
   { code:'ESP', name:'Spain',             cc:'es',     group:'H', rank:1,  conf:'UEFA',     c1:'#aa151b', c2:'#f1bf00' },
   { code:'CPV', name:'Cape Verde',        cc:'cv',     group:'H', rank:68, conf:'CAF',      c1:'#003893', c2:'#cf2027' },
   { code:'KSA', name:'Saudi Arabia',      cc:'sa',     group:'H', rank:60, conf:'AFC',      c1:'#006c35', c2:'#ffffff' },
-  { code:'URU', name:'Uruguay',           cc:'uy',     group:'H', rank:16, conf:'CONMEBOL', c1:'#5cbfeb', c2:'#001b69' },
+  { code:'URU', name:'Uruguay',           cc:'uy',     group:'H', rank:15, conf:'CONMEBOL', c1:'#5cbfeb', c2:'#001b69' },
   // GROUP I
   { code:'FRA', name:'France',            cc:'fr',     group:'I', rank:3,  conf:'UEFA',     c1:'#002395', c2:'#ed2939' },
   { code:'SEN', name:'Senegal',           cc:'sn',     group:'I', rank:19, conf:'CAF',      c1:'#00853f', c2:'#fdef42' },

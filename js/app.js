@@ -4,6 +4,9 @@
    used by every page. Loaded after data.js.
    ===================================================================== */
 
+/* bump on each deploy to bust caches and roll the service worker */
+const APP_VERSION = '2026.06.13';
+
 /* ----------  small DOM helpers  ---------- */
 const $  = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
@@ -133,7 +136,11 @@ function avatarStyle(t){
   return `background:linear-gradient(150deg,${t.c1},${t.c2});color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.4)`;
 }
 function initials(name){
-  const p=name.split(' '); return (p[0][0]+(p[p.length-1][0]||'')).toUpperCase();
+  if(!name) return '?';
+  const p=name.trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '?';
+  const a=p[0][0]||'', b=p.length>1?(p[p.length-1][0]||''):'';
+  return ((a+b).toUpperCase())||'?';
 }
 
 /* ----------  STANDINGS computed from finished matches  ---------- */
@@ -184,7 +191,21 @@ function pottRace(){
    ranked and assigned to their designated slots; W##/L## propagate from
    results. The live feed (openfootball) overrides projections with real
    names once FIFA confirms them. */
+/* recent form (last n real results) for a team → ['W','D','L', ...] oldest→newest */
+function teamForm(code, n){
+  n=n||5;
+  return MATCHES.filter(m=>(m.home===code||m.away===code) && m.hs!=null && m.as!=null)
+    .sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff)).slice(-n)
+    .map(m=>{ const gf=m.home===code?m.hs:m.as, ga=m.home===code?m.as:m.hs; return gf>ga?'W':gf<ga?'L':'D'; });
+}
+function formDots(code){
+  const f=teamForm(code);
+  if(!f.length) return '<span class="muted" style="font-size:.68rem">—</span>';
+  return '<span class="form-dots">'+f.map(r=>`<i class="fd fd-${r}" title="${r==='W'?'Win':r==='L'?'Loss':'Draw'}">${r}</i>`).join('')+'</span>';
+}
 function groupComplete(g){ const ms=MATCHES.filter(m=>m.group===g); return ms.length>0 && ms.every(m=>m.hs!=null&&m.as!=null); }
+function groupStarted(g){ return MATCHES.some(m=>m.group===g && m.hs!=null); }
+function anyGroupResults(){ return MATCHES.some(m=>m.group && m.hs!=null); }
 function thirdPlaceTable(){
   const arr=GROUPS.filter(groupComplete).map(g=>{ const s=computeStandings(g)[2];
     return {group:g, code:s.code, Pts:s.Pts, GD:s.GF-s.GA, GF:s.GF}; });
@@ -234,6 +255,16 @@ function resolveKnockout(){
   }
 }
 
+/* ----------  make any element keyboard- & screen-reader-accessible as a button  ---------- */
+function a11yClick(elm, handler, label){
+  elm.setAttribute('role','button');
+  elm.setAttribute('tabindex','0');
+  if(label) elm.setAttribute('aria-label', label);
+  elm.style.cursor='pointer';
+  elm.addEventListener('click', handler);
+  elm.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); handler(e); } });
+}
+
 /* ----------  team-or-label for knockout TBD slots  ---------- */
 function sideTeam(code,label){
   if(code) return team(code);
@@ -251,8 +282,9 @@ function matchCard(m){
     scoreHtml = `<div class="match-score">${hasScore?`${m.hs} <span class="vs">–</span> ${m.as}`:'<span class="vs">vs</span>'}
       <small style="color:var(--red);font-size:.66rem">${m.clockLabel||"LIVE"}</small></div>`;
   } else if(done){
-    scoreHtml = `<div class="match-score">${hasScore?`${m.hs} <span class="vs">–</span> ${m.as}`:'<span class="vs">–</span>'}
-      <small style="color:var(--muted);font-size:.66rem">FT</small></div>`;
+    scoreHtml = hasScore
+      ? `<div class="match-score">${m.hs} <span class="vs">–</span> ${m.as}<small style="color:var(--muted);font-size:.66rem">FT</small></div>`
+      : `<div class="match-score"><span class="ko" style="color:var(--muted);font-size:.8rem">Result<small>pending</small></span></div>`;
   } else {
     scoreHtml = `<div class="match-score"><span class="ko">${localTime(m.kickoff)}<small>${localDate(m.kickoff)}</small></span></div>`;
   }
@@ -260,7 +292,7 @@ function matchCard(m){
   c.innerHTML = `
     <div class="match-top">
       <span class="match-stage">${m.stage||''}</span>
-      ${isLive?'<span class="live-badge">LIVE</span>':done?'<span class="muted">Full time</span>':`<span>${relativeKO(m.kickoff)}</span>`}
+      ${isLive?'<span class="live-badge">LIVE</span>':done?`<span class="muted">${hasScore?'Full time':'Awaiting result'}</span>`:`<span>${relativeKO(m.kickoff)}</span>`}
     </div>
     <div class="match-teams">
       <div class="mt-side">
@@ -277,8 +309,8 @@ function matchCard(m){
       <span>📍 ${st.name}, ${st.city}</span>
       ${isLive?`<a href="live.html?match=${m.id}">Watch live →</a>`:`<span>Details →</span>`}
     </div>`;
-  c.style.cursor='pointer';
-  c.addEventListener('click', e=>{ if(e.target.closest('a')) return; matchDetail(m); });
+  a11yClick(c, (e)=>{ if(e&&e.target&&e.target.closest&&e.target.closest('a')) return; matchDetail(m); },
+    `${h.name} versus ${a.name}${m.stage?', '+m.stage:''}. View match details`);
   return c;
 }
 
@@ -521,7 +553,7 @@ function buildChrome(active){
         <span>WORLD CUP <b>26</b><small>USA · CAN · MEX</small></span>
       </a>
       <nav class="nav-links" id="navLinks">
-        ${links.map(([h,t,c])=>`<a href="${h}" class="${c||''} ${active===h?'active':''}">${t}</a>`).join('')}
+        ${links.map(([h,t,c])=>`<a href="${h}" class="${c||''} ${active===h?'active':''}" ${active===h?'aria-current="page"':''}>${t}</a>`).join('')}
       </nav>
       <div class="nav-right">
         <button class="icon-btn" id="themeToggle" aria-label="Toggle light/dark" title="Light / dark theme">☀️</button>
@@ -558,8 +590,8 @@ function buildChrome(active){
           <a href="teams.html">Teams &amp; Groups</a><a href="players.html">Star Players</a>
           <a href="stadiums.html">Stadiums &amp; Maps</a><a href="index.html#format">Tournament Format</a></div>
         <div><h5>The Tournament</h5>
-          <a href="#">June 11 – July 19, 2026</a><a href="#">16 Host Cities</a>
-          <a href="#">3 Nations · 48 Teams</a><a href="#">Final: MetLife Stadium</a></div>
+          <a href="fixtures.html">June 11 – July 19, 2026</a><a href="stadiums.html">16 Host Cities</a>
+          <a href="teams.html">3 Nations · 48 Teams</a><a href="bracket.html">Final: MetLife Stadium</a></div>
       </div>
       <div class="footer-bottom">
         <span>© 2026 World Cup 26 · Independent matchday companion.</span>
@@ -624,8 +656,9 @@ function initReveal(){
 function closeModal(){ const ov=$('#modalOverlay'); if(ov) ov.classList.remove('open'); }
 function showModal(html){
   let ov=$('#modalOverlay');
-  if(!ov){ ov=el('div','modal-overlay'); ov.id='modalOverlay'; document.body.appendChild(ov);
-    ov.addEventListener('click',e=>{ if(e.target===ov) closeModal(); }); }
+  if(!ov){ ov=el('div','modal-overlay'); ov.id='modalOverlay'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); document.body.appendChild(ov);
+    ov.addEventListener('click',e=>{ if(e.target===ov) closeModal(); });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape' && ov.classList.contains('open')) closeModal(); }); }
   ov.innerHTML = `<div class="modal"><button class="modal-close" onclick="closeModal()">×</button>${html}</div>`;
   ov.classList.add('open');
 }
@@ -642,14 +675,24 @@ function initPWA(){
     const l=document.createElement('link'); l.rel='manifest'; l.href='manifest.webmanifest'; document.head.appendChild(l);
     const m=document.createElement('meta'); m.name='theme-color'; m.content='#9b3cff'; document.head.appendChild(m);
   }
+  // apple-touch-icon (iOS home-screen needs a PNG)
+  if(!document.querySelector('link[rel="apple-touch-icon"]')){
+    const a=document.createElement('link'); a.rel='apple-touch-icon'; a.href='icons/apple-touch-icon.png'; document.head.appendChild(a);
+  }
   // bespoke emblem favicon
   const fav=document.querySelector('link[rel="icon"]');
   if(fav) fav.href='data:image/svg+xml,'+encodeURIComponent(BRAND_SVG.replace(' class="emblem"',''));
   // SW only works over http(s)/localhost (not file://)
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-    navigator.serviceWorker.register('sw.js').then(async reg=>{
+    // version query busts the SW script cache so new deploys are picked up
+    navigator.serviceWorker.register('sw.js?v='+APP_VERSION).then(async reg=>{
+      reg.addEventListener('updatefound', ()=>{ const sw=reg.installing; if(sw) sw.addEventListener('statechange', ()=>{ if(sw.state==='installed' && navigator.serviceWorker.controller) sw.postMessage({type:'skip-waiting'}); }); });
+      try{ reg.update(); }catch(e){}
       try{ if('periodicSync' in reg){ const s=await navigator.permissions.query({name:'periodic-background-sync'}); if(s.state==='granted') reg.periodicSync.register('wc-check',{minInterval:60*60*1000}); } }catch(e){}
     }).catch(()=>{});
+    // reload once when a new worker takes control so the freshest assets show without a manual refresh
+    let _reloaded=false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{ if(_reloaded) return; _reloaded=true; location.reload(); });
   }
 }
 function syncSWState(){

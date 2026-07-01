@@ -55,20 +55,29 @@ const NewsFeed = (() => {
   ];
 
   const cache = {};
+  const DEFAULT_KEY = WC_FEEDS.map(f=>f.url).join('|');
+  const LS_KEY = 'wc26_news_lastgood';
+  let _live = false;                                  // did the last main load actually reach a feed?
   async function load(feeds, ttl){
     feeds = feeds || WC_FEEDS; ttl = ttl || 5*60000;
     const key = feeds.map(f=>f.url).join('|');
-    if(cache[key] && Date.now()-cache[key].t < ttl) return cache[key].items;
+    const isMain = key===DEFAULT_KEY;
+    if(cache[key] && Date.now()-cache[key].t < ttl){ if(isMain) _live=true; return cache[key].items; }
     const res = await Promise.allSettled(feeds.map(f=>feed(f.url,f.src)));
     let all=[]; res.forEach(r=>{ if(r.status==='fulfilled') all=all.concat(r.value); });
     const seen=new Set(); all=all.filter(a=>{ const k=a.title.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; });
     all.sort((a,b)=> new Date(b.date)-new Date(a.date));
-    if(all.length) cache[key]={ t:Date.now(), items:all };
+    if(all.length){
+      cache[key]={ t:Date.now(), items:all };
+      if(isMain){ _live=true; try{ localStorage.setItem(LS_KEY, JSON.stringify({ t:Date.now(), items:all.slice(0,40) })); }catch(e){} }
+      return all;
+    }
+    if(isMain){ _live=false; try{ const ls=JSON.parse(localStorage.getItem(LS_KEY)); if(ls && ls.items && ls.items.length) return ls.items; }catch(e){} }
     return all;
   }
   async function forMatch(home, away){
     return load([{ url:googleNews(`${home} ${away} football world cup`), src:'Google News' }], 5*60000);
   }
 
-  return { load, feed, forMatch, googleNews, WC_FEEDS };
+  return { load, feed, forMatch, googleNews, WC_FEEDS, get live(){ return _live; } };
 })();

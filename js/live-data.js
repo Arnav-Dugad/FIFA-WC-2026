@@ -109,8 +109,12 @@ const LiveData = (() => {
 
   /* ---------- SECONDARY: TheSportsDB in-play live scores ---------- */
   async function fetchLiveScores(){
+    // only call the (rate-limited) feed when a match is actually in its live window
+    const now=Date.now();
+    const active=MATCHES.filter(m=>m.home&&m.away&&!m._final&&(()=>{ const ko=+new Date(m.kickoff); return now>=ko-30*60000 && now<=ko+3*36e5; })());
+    if(!active.length) return false;
+    const days=[...new Set(active.map(m=>new Date(m.kickoff).toISOString().slice(0,10)))];   // only relevant day(s)
     const base='https://www.thesportsdb.com/api/v1/json/3/eventsday.php';
-    const days=[]; for(let d=-1; d<=1; d++){ days.push(new Date(Date.now()+d*864e5).toISOString().slice(0,10)); }
     let changed=false;
     for(const day of days){
       try{
