@@ -12,8 +12,8 @@
   --card:rgba(255,255,255,.045);
   --card-border:rgba(255,255,255,.09);
   --text:#f3f1fb;
-  --muted:#9b9bc0;
-  --faint:#64647f;
+  --muted:#a7a7c8;
+  --faint:#8585a0;
 
   --green:#1fe08a;
   --green-deep:#0fb86f;
@@ -39,6 +39,8 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
+.ns{background:#0e1422;color:#eef2f8;padding:14px 18px;text-align:center;font-size:.9rem;line-height:1.9;border-bottom:1px solid #28324a;font-family:Inter,system-ui,sans-serif}
+.ns a{color:#00c46a;font-weight:600}
 html{scroll-behavior:smooth}
 body{
   font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
@@ -85,8 +87,8 @@ img{max-width:100%;display:block}
   border-bottom:1px solid var(--card-border);
 }
 .site-header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-hero);opacity:.9}
-.nav{height:100%;display:flex;align-items:center;justify-content:space-between;gap:18px}
-.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.05rem}
+.nav{height:100%;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.05rem;flex:0 0 auto}
 .brand .logo{
   width:40px;height:40px;border-radius:12px;overflow:hidden;flex:0 0 auto;
   box-shadow:var(--shadow-glow);
@@ -99,10 +101,10 @@ img{max-width:100%;display:block}
 .icon-btn.on{color:var(--gold);border-color:rgba(255,206,77,.5)}
 .brand b{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .brand small{display:block;font-size:.62rem;letter-spacing:2px;color:var(--muted);font-weight:600}
-.nav-links{display:flex;align-items:center;gap:4px}
+.nav-links{display:flex;align-items:center;gap:2px;flex-wrap:nowrap}
 .nav-links a{
-  padding:9px 14px;border-radius:10px;font-size:.9rem;font-weight:600;color:var(--muted);
-  transition:.18s;position:relative;
+  padding:8px 11px;border-radius:10px;font-size:.87rem;font-weight:600;color:var(--muted);
+  transition:.18s;position:relative;white-space:nowrap;
 }
 .nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05)}
 .nav-links a.active{color:var(--text);background:rgba(0,196,106,.12)}
@@ -200,6 +202,14 @@ img{max-width:100%;display:block}
 .standings .tname img{width:24px;height:16px;border-radius:3px;object-fit:cover}
 .standings .pts{font-weight:800;color:var(--gold)}
 .standings .qual{box-shadow:inset 3px 0 0 var(--green)}
+.form-dots{display:inline-flex;gap:2px;justify-content:center}
+.form-dots .fd{width:14px;height:14px;border-radius:4px;font-size:.52rem;font-weight:800;display:grid;place-items:center;color:#06140d;line-height:1}
+.fd-W{background:var(--green)}
+.fd-D{background:#8b91aa;color:#10131c}
+.fd-L{background:var(--red);color:#fff}
+.standings th.form-col,.standings td.form-col{padding-left:8px;padding-right:8px}
+.standings .tname{white-space:nowrap}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
 /* ---------- TEAM TILE (teams page) ---------- */
 .teams-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
@@ -412,8 +422,10 @@ img{max-width:100%;display:block}
 .home-promo .muted{font-size:.9rem}
 
 /* ---------- RESPONSIVE ---------- */
-/* collapse the (now longer) nav into the hamburger earlier */
-@media(max-width:1024px){
+/* hide the (non-essential) timezone badge on smaller desktops to give the nav room */
+@media(max-width:1280px){ .tz-badge{display:none} }
+/* collapse the (now longer) nav into the hamburger when the inline links no longer fit */
+@media(max-width:1100px){
   .nav-links{
     position:fixed;top:var(--header-h);left:0;right:0;flex-direction:column;align-items:stretch;
     background:rgba(7,10,18,.98);backdrop-filter:blur(20px);padding:14px;gap:4px;
